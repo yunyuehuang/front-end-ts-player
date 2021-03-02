@@ -11,7 +11,7 @@
   <div class="app" id="app">
     <div class="list-box">
       <div class="item" v-for="(item, index) in list" :class="{ active: index == listIndex }" @click="listIndex = index">
-        {{item.name}}{{index}}
+        {{item.name}}
       </div>
     </div>
     <div class="">
@@ -26,91 +26,6 @@
   <script src="./dist/mux.js"></script>
 
   <script>
-    var app = new Vue({
-      el: '#app',
-      data: {
-        listIndex:0,
-        num:1,
-        list: [
-          {
-            name:"1系列",
-            url:"https://v.qiexiazai.com/fuckyou-9527/xr163/8000kb/hls/index{{index}}.ts"
-          },
-          {
-            name:"2系列",
-            url:"https://v.qiexiazai.com/fuckyou-9527/xr163/8000kb/hls/index{{index}}.ts"
-          }
-        ]
-      },
-      method:{
-        play(){
-
-        }
-      }
-    })
-    function getData(url) {
-      return
-      let xhr = new XMLHttpRequest();
-      let resStatus = 1
-      url = url.replace("{{index}}", urlIndex);
-      xhr.onerror = function(e){
-        console.log(e,"请求错误")
-      }
-      xhr.onloadend = function(e){
-        
-        if(e.lengthComputable == false){
-          console.log(e,"下载异常")
-          timeOutDeal()
-        }
-      }
-      xhr.open('GET', url);
-      // 接收的是 video/mp2t 二进制数据，并且arraybuffer类型方便后续直接处理 
-      xhr.responseType = "arraybuffer";
-      xhr.send();
-      var timer = setTimeout(timeOutDeal,3000)
-      
-      //超时之后的处理。停止当前请求，重新发起请求。
-      function timeOutDeal(){
-        clearTimeout(timer)
-        if(resStatus == 1){
-          console.log("请求超时", resStatus)
-        }else{
-          console.log("响应超时", resStatus)
-        }
-        resStatus = 1
-        xhr.abort()
-        setTimeout(function(){
-          xhr.open('GET', url);
-          xhr.send();
-          timer = setTimeout(timeOutDeal,3000)
-        },1000)
-      
-      }
-   
-      xhr.onreadystatechange = function () {
-        //3开始接收响应体  4响应体接收完成
-       
-        if(xhr.readyState >= 3){
-          clearTimeout(timer)
-          //接收响应体的过程中，会多次触发此回调，readyState都是3，如果回调间隔过长，表示接收数据阻塞，这里也设置一个超时。
-          //取消请求的时候会有一个 readyState是3的回调，status为0.
-          if(xhr.readyState == 3){
-            timer = setTimeout(timeOutDeal,5000)
-            console.log("开始响应")
-            resStatus = 2
-          }
-          if (xhr.readyState == 4) {
-            if (xhr.status == 200) {
-              transferFormat(xhr.response);
-            } else {
-              console.log(xhr.status,'请求结束，结果error')
-            }
-          }
-        }
-
-      }
-    }
-
     var urls = "https://v.qiexiazai.com/fuckyou-9527/xr163/8000kb/hls/index{{index}}.ts";
     var $ = document.querySelector.bind(document);
     var vjsParsed,
@@ -118,21 +33,46 @@
       buffer,
       mediaSource,
       urlIndex = 0 //请求链接序号;
-    
+
     video = document.createElement('video');
     video.controls = true;
     video.addEventListener('error', logevent);
-
     mediaSource = new MediaSource();
-
-    video.src = URL.createObjectURL(mediaSource);
+          video.src = URL.createObjectURL(mediaSource)
     $('#video-wrapper').appendChild(video);
 
-    function logevent(event) {
-      console.log(event);
-    }
-   
-    mediaSource.addEventListener('sourceopen', function () {
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+        listIndex:0,
+        num:169,
+        list: [
+          {
+            name:"1系列",
+            url:"https://v.qiexiazai.com/fuckyou-9527/xr{{num}}/8000kb/hls/index{{index}}.ts"
+          },
+          {
+            name:"2系列",
+            url:"https://v.qiexiazai.com/fuckyou-9527/xr{{num}}/8000kb/hls/index{{index}}.ts"
+          }
+        ]
+      },
+      methods:{
+        play(){
+          urlIndex = 0
+          let url = this.list[this.listIndex].url.replace("{{num}}", this.num)
+          mediaSource = new MediaSource();
+          video.src = URL.createObjectURL(mediaSource)
+          mediaSource.addEventListener('sourceopen', function () {
+            initBuffer()
+            getData(url)
+          });
+        }
+      }
+    })
+
+    function initBuffer(){
       // MediaSource 实例默认的duration属性为NaN
       mediaSource.duration = 0;
       // 转换后mp4的音频格式 视频格式
@@ -156,12 +96,83 @@
         getData(urls)
       });
       buffer.addEventListener('error', logevent);
-  
+    }
+    function getData(url) {
+
+      let xhr = new XMLHttpRequest();
+      let resStatus = 1
+      url = url.replace("{{index}}", urlIndex);
+      xhr.onerror = function(e){
+        console.log(e,"请求错误")
+      }
+      xhr.onloadend = function(e){
+        
+        if(e.lengthComputable == false){
+          console.log(e,"下载异常")
+          timeOutDeal()
+        }
+      }
+      xhr.open('GET', url);
+      // 接收的是 video/mp2t 二进制数据，并且arraybuffer类型方便后续直接处理 
+      xhr.responseType = "arraybuffer";
+      xhr.send();
+      var timer = setTimeout(timeOutDeal,3000)
+      var time1
+      //超时之后的处理。停止当前请求，重新发起请求。
+      function timeOutDeal(){
+        clearTimeout(timer)
+        
+        
+        if(resStatus == 1){
+          console.log("请求超时", resStatus)
+        }else{
+          console.log("响应超时", resStatus)
+        }
+        resStatus = 1
+        xhr.abort() //timeout调用 abort->onreadystatechange  readyState是4的回调，status为0 -> onloadend 再次调用timeOutDeal-> 输出一次，设置time1定时器 ->  然后再到timeout的这次,又设置一个time1定时器。-> 6秒钟之后几乎同时发起send，首先发起的会在第二次
+        if(time1){
+          clearTimeout(time1)
+        }
+        console.log("等下重发")
+        time1 = setTimeout(function(){
+          console.log("请求重发")
+          xhr.open('GET', url);
+          xhr.send();
+          timer = setTimeout(timeOutDeal,3000)
+        },6000)
+      
+      }
    
-      getData(urls)
+      xhr.onreadystatechange = function () {
+        //3开始接收响应体  4响应体接收完成
+       
+        if(xhr.readyState >= 3){
+          clearTimeout(timer)
+          //接收响应体的过程中，会多次触发此回调，readyState都是3，如果回调间隔过长，表示接收数据阻塞，这里也设置一个超时。
+          //取消请求的时候会有一个 readyState是4的回调，status为0.
+          if(xhr.readyState == 3){
+            timer = setTimeout(timeOutDeal,5000)
+            console.log("开始响应")
+            resStatus = 2
+          }
+          if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+              transferFormat(xhr.response);
+            } else {
+              console.log(xhr.status,'请求结束，结果error')
+            }
+          }
+        }
 
-    });
+      }
+    }
 
+
+    function logevent(event) {
+      console.log(event);
+    }
+   
+   
     function transferFormat(data) {
       // 将源数据从ArrayBuffer格式保存为可操作的Uint8Array格式
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
