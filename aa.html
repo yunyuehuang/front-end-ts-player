@@ -14,10 +14,12 @@
         {{item.name}}
       </div>
     </div>
-    <div class="">
+    <div class="operate">
       选集<input v-model="num">
+      <div class="btn" @click="play">获取</div>
     </div>
-    <div class="" @click="play">获取</div>
+    
+    <div>状态：{{globalStatusStr}}</div>
   </div>
   <div id="video-wrapper">
 
@@ -26,27 +28,28 @@
   <script src="./dist/mux.js"></script>
 
   <script>
-    var urls = "https://v.qiexiazai.com/fuckyou-9527/xr163/8000kb/hls/index{{index}}.ts";
+    //var urls = "https://v.qiexiazai.com/fuckyou-9527/xr163/8000kb/hls/index{{index}}.ts";
     var $ = document.querySelector.bind(document);
     var vjsParsed,
       video,
       buffer,
       mediaSource,
-      urlIndex = 0 //请求链接序号;
+      urlIndex = 100, //请求链接序号;
+      videoUrl = "",
+      globalStatus = 0 //播放器状态  0未开始  1下载中  2 接收完毕  3等待切换
 
     video = document.createElement('video');
     video.controls = true;
-    video.addEventListener('error', logevent);
-    mediaSource = new MediaSource();
-          video.src = URL.createObjectURL(mediaSource)
     $('#video-wrapper').appendChild(video);
 
+    video.addEventListener('error', logevent);
 
     var app = new Vue({
       el: '#app',
       data: {
         listIndex:0,
         num:169,
+        globalStatus:0,
         list: [
           {
             name:"1系列",
@@ -58,16 +61,34 @@
           }
         ]
       },
+      computed: {
+        // a computed getter
+        globalStatusStr: function () {
+          let status = {
+            "0":"未开始",
+            "1":"下载中",
+            "2":"完成",
+            "3":"切换中"
+          }
+          return status[this.globalStatus]
+        }
+      },
       methods:{
         play(){
-          urlIndex = 0
-          let url = this.list[this.listIndex].url.replace("{{num}}", this.num)
-          mediaSource = new MediaSource();
-          video.src = URL.createObjectURL(mediaSource)
-          mediaSource.addEventListener('sourceopen', function () {
-            initBuffer()
-            getData(url)
-          });
+          if(this.globalStatus == 0 || this.globalStatus == 2){
+            this.globalStatus = 1
+            urlIndex = 0
+            videoUrl = this.list[this.listIndex].url.replace("{{num}}", this.num)
+            mediaSource = new MediaSource()
+            video.src = URL.createObjectURL(mediaSource)
+            mediaSource.addEventListener('sourceopen', function () {
+              initBuffer()
+              getData(videoUrl)
+            });
+          }else{
+            this.globalStatus = 3
+          }
+          
         }
       }
     })
@@ -92,8 +113,14 @@
       buffer.mode = 'sequence'
       buffer.addEventListener('updatestart', logevent);
       buffer.addEventListener('updateend', function () {
-        urlIndex++
-        getData(urls)
+        if(app.globalStatus == 3){
+          app.globalStatus = 0
+          app.play()
+        }else{
+          urlIndex++
+          getData(videoUrl)
+        }
+       
       });
       buffer.addEventListener('error', logevent);
     }
@@ -133,12 +160,19 @@
         if(time1){
           clearTimeout(time1)
         }
+       
+        if(app.globalStatus == 3){
+          app.globalStatus = 0
+          app.play()
+          return
+        }
+
         console.log("等下重发")
         time1 = setTimeout(function(){
           console.log("请求重发")
           xhr.open('GET', url);
           xhr.send();
-          timer = setTimeout(timeOutDeal,3000)
+          timer = setTimeout(timeOutDeal, 3000)
         },6000)
       
       }
@@ -201,7 +235,14 @@
       // 监听转换完成事件，拼接最后结果并传入MediaSource
       transmuxer.on('done', function () {
         var offset = 0;
-        var bytes = new Uint8Array(remuxedInitSegment.byteLength + remuxedBytesLength)
+        try {
+          var bytes = new Uint8Array(remuxedInitSegment.byteLength + remuxedBytesLength)
+        } catch (error) {
+          console.log(error,"下载完成")
+          app.globalStatus = 2
+          return
+        }
+       
         bytes.set(remuxedInitSegment, offset);
         offset += remuxedInitSegment.byteLength;
 
