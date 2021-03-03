@@ -56,8 +56,8 @@
             url:"https://v.qiexiazai.com/fuckyou-9527/xr{{num}}/8000kb/hls/index{{index}}.ts"
           },
           {
-            name:"2系列",
-            url:"https://v.qiexiazai.com/fuckyou-9527/xr{{num}}/8000kb/hls/index{{index}}.ts"
+            name:"r1",
+            url:"https://v.qiexiazai.com/fuckyou-9527/ru{{num}}/3500kb/hls/index{{index}}.ts"
           }
         ]
       },
@@ -161,19 +161,18 @@
           clearTimeout(time1)
         }
        
-        if(app.globalStatus == 3){
-          app.globalStatus = 0
-          app.play()
-          return
-        }
-
         console.log("等下重发")
         time1 = setTimeout(function(){
+          if(app.globalStatus == 3){ //请求异常的时候，
+            app.globalStatus = 0
+            app.play()
+            return
+          }
           console.log("请求重发")
           xhr.open('GET', url);
           xhr.send();
           timer = setTimeout(timeOutDeal, 3000)
-        },6000)
+        },1000)
       
       }
    
@@ -225,8 +224,8 @@
 
       // 监听data事件，开始转换流
       transmuxer.on('data', function (event) {
-        console.log(event);
-        if (event.type === outputType) {
+        console.log(event,"data事件");
+        if (event.type == outputType) {
           remuxedSegments.push(event);
           remuxedBytesLength += event.data.byteLength;
           remuxedInitSegment = event.initSegment;
