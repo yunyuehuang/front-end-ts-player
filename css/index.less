@@ -3,19 +3,31 @@
   padding: 0;
 }
 .app{
-  width: 500px;
+  width: 1000px;
   margin:0 auto;
+
+  .left,.right{
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  .right{
+    margin-left: 20px;
+  }
 }
 .list-box{
+  height: 500px;
+  overflow-y: auto;
+  width: 120px;
   padding:10px;
   margin-top: 20px;
   border:1px solid #d7d7d7;
+  padding:3px;
   .item{
     padding: 5px;
     border:1px solid #d9d9d9;
-    margin-right: 10px;
+    margin-bottom: 3px;
     font-size: 15px;
-    display: inline-block;
     cursor: pointer;
     &.active{
       background: #dddddd;
@@ -46,11 +58,12 @@
   }
 }
 #video-wrapper {
+  margin:20px auto;
   width: 500px;
-  height: 500px;
+  height: 400px;
 }
 
 #video-wrapper video {
   width: 500px;
-  height: 500px;
+  height: 400px;
 }
