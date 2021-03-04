@@ -8,8 +8,8 @@ var vjsParsed,
   urlIndex = 100, //请求链接序号;
   videoUrl = "",
   outputType = "combined",   // 只处理视频设置video，只处理音频设置audio，视频音频混合设置为'combined'
-  globalStatus = 0 //播放器状态  0未开始  1下载中  2 接收完毕  3等待切换
-
+  globalStatus = 0, //播放器状态  0未开始  1下载中  2 接收完毕  3等待切换
+  videoInit = 0
 
 
 var app = new Vue({
@@ -26,6 +26,10 @@ var app = new Vue({
       {
         name:"r1",
         url:"https://v.qiexiazai.com/fuckyou-9527/ru{{num}}/3500kb/hls/index{{index}}.ts"
+      },
+      {
+        name:"约模私拍",
+        url:"https://v.qiexiazai.com/fuckyou-9527/wuying{{num}}/8000kb/hls/index{{index}}.ts"
       }
     ]
   },
@@ -57,6 +61,7 @@ var app = new Vue({
       if(this.globalStatus == 0 || this.globalStatus == 2){
         this.globalStatus = 1
         urlIndex = 0
+        videoInit = 0
         videoUrl = this.list[this.listIndex].url.replace("{{num}}", this.num)
         mediaSource = new MediaSource()
         video.src = URL.createObjectURL(mediaSource)
@@ -81,7 +86,7 @@ function initBuffer(){
 
   // 转换为带音频、视频的mp4
   if (outputType === 'combined') {
-    buffer = mediaSource.addSourceBuffer('video/mp4;codecs="' + 'avc1.64001f,mp4a.40.5' + '"');
+    buffer = mediaSource.addSourceBuffer('video/mp4; codecs="mp4a.40.2,avc1.64001f"');
   } else if (outputType === 'video') {
     // 转换为只含视频的mp4
     buffer = mediaSource.addSourceBuffer('video/mp4;codecs="' + codecsArray[0] + '"');
@@ -91,7 +96,7 @@ function initBuffer(){
   }
 
 
-  buffer.mode = 'sequence'
+  //buffer.mode = 'sequence'
   buffer.addEventListener('updatestart', logevent);
   buffer.addEventListener('updateend', function () {
     if(app.globalStatus == 3){
@@ -207,13 +212,30 @@ function transferFormat(data) {
     //remux选项默认为false，则会回调两次，因此event.type为video，一次type为audio，如果为true，则只会回调一次，type为combined
     console.log(event,"data事件");
     if (event.type == outputType) {
-      remuxedSegments.push(event);
-      remuxedBytesLength += event.data.byteLength;
-      remuxedInitSegment = event.initSegment;
+      // remuxedSegments.push(event);
+      // remuxedBytesLength += event.data.byteLength;
+      // remuxedInitSegment = event.initSegment;
+    //  buffer.timestampOffset = urlIndex
+    console.log(mediaSource.duration, buffer.timestampOffset)
+    buffer.timestampOffset = mediaSource.duration>0 ? mediaSource.duration -1 : 0
+      if(videoInit == 0 ){
+        let data = new Uint8Array(event.initSegment.byteLength + event.data.byteLength);
+        data.set(event.initSegment, 0);
+        data.set(event.data, event.initSegment.byteLength);
+        console.log(muxjs.mp4.tools.inspect(data));
+        //buffer.appendBuffer(data);
+        videoInit = 1
+        console.log("第一次初始化")
+      }else{
+        //buffer.appendBuffer(new Uint8Array(event.data));
+        console.log("后续直接添加")
+      }
+     
     }
   });
   // 监听转换完成事件，拼接最后结果并传入MediaSource
   transmuxer.on('done', function () {
+    return
     var offset = 0;
     try {
       var bytes = new Uint8Array(remuxedInitSegment.byteLength + remuxedBytesLength)
