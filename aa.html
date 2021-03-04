@@ -36,6 +36,7 @@
       mediaSource,
       urlIndex = 100, //请求链接序号;
       videoUrl = "",
+      outputType = "combined",   // 只处理视频设置video，只处理音频设置audio，视频音频混合设置为'combined'
       globalStatus = 0 //播放器状态  0未开始  1下载中  2 接收完毕  3等待切换
 
     video = document.createElement('video');
@@ -98,10 +99,10 @@
       mediaSource.duration = 0;
       // 转换后mp4的音频格式 视频格式
       var codecsArray = ["avc1.64001f", "mp4a.40.5"];
-      var outputType = "video"
-      var combined = false
+      
+    
       // 转换为带音频、视频的mp4
-      if (combined) {
+      if (outputType === 'combined') {
         buffer = mediaSource.addSourceBuffer('video/mp4;codecs="' + 'avc1.64001f,mp4a.40.5' + '"');
       } else if (outputType === 'video') {
         // 转换为只含视频的mp4
@@ -110,6 +111,8 @@
         // 转换为只含音频的mp4
         buffer = mediaSource.addSourceBuffer('audio/mp4;codecs="' + (codecsArray[1] || codecsArray[0]) + '"');
       }
+
+
       buffer.mode = 'sequence'
       buffer.addEventListener('updatestart', logevent);
       buffer.addEventListener('updateend', function () {
@@ -211,19 +214,19 @@
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
       var segment = new Uint8Array(data);
       var combined = false;
-      // 接收无音频ts文件，OutputType设置为'video'，带音频ts设置为'combined'
-      var outputType = 'video';
+   
       var remuxedSegments = [];
       var remuxedBytesLength = 0;
       var remuxedInitSegment = null;
 
-      // remux选项默认为true，将源数据的音频视频混合为mp4，设为false则不混合
+      // remux选项默认为true，将源数据的音频与视频混合为mp4，设为false则不混合。如果为false，data事件里面会收到两次回调，一次是视频数据，一次是音频数据，如果为true，则只会收到一次视频和音频合并后的数据。
       var transmuxer = new muxjs.mp4.Transmuxer({
-        remux: false
+        remux: true
       });
 
       // 监听data事件，开始转换流
       transmuxer.on('data', function (event) {
+        //remux选项默认为false，则会回调两次，因此event.type为video，一次type为audio，如果为true，则只会回调一次，type为combined
         console.log(event,"data事件");
         if (event.type == outputType) {
           remuxedSegments.push(event);
