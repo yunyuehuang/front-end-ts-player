@@ -9,7 +9,10 @@ var vjsParsed,
   videoUrl = "",
   outputType = "combined",   // 只处理视频设置video，只处理音频设置audio，视频音频混合设置为'combined'
   globalStatus = 0, //播放器状态  0未开始  1下载中  2 接收完毕  3等待切换
-  videoInit = 0
+  videoInit = 0,
+  videoCache = [
+    
+  ]
 
 
 var app = new Vue({
@@ -87,6 +90,8 @@ function initBuffer(){
   // 转换为带音频、视频的mp4
   if (outputType === 'combined') {
     buffer = mediaSource.addSourceBuffer('video/mp4; codecs="mp4a.40.2,avc1.64001f"');
+   
+   // mediaSource.addSourceBuffer('video/mp4; codecs="mp4a.40.2,avc1.64001f"');
   } else if (outputType === 'video') {
     // 转换为只含视频的mp4
     buffer = mediaSource.addSourceBuffer('video/mp4;codecs="' + codecsArray[0] + '"');
@@ -98,7 +103,16 @@ function initBuffer(){
 
   //buffer.mode = 'sequence'
   buffer.addEventListener('updatestart', logevent);
-  buffer.addEventListener('updateend', function () {
+  buffer.addEventListener('updateend', bufferEnd);
+  buffer.addEventListener('error', logevent);
+}
+
+function bufferEnd(){
+
+  if(urlIndex == 30){
+    buffer.remove(0,60)
+    urlIndex++
+  }else{
     if(app.globalStatus == 3){
       app.globalStatus = 0
       app.play()
@@ -106,10 +120,10 @@ function initBuffer(){
       urlIndex++
       getData(videoUrl)
     }
-   
-  });
-  buffer.addEventListener('error', logevent);
+  }
 }
+
+
 function getData(url) {
 
   let xhr = new XMLHttpRequest();
@@ -219,15 +233,16 @@ function transferFormat(data) {
     console.log(mediaSource.duration, buffer.timestampOffset)
     buffer.timestampOffset = mediaSource.duration>0 ? mediaSource.duration -1 : 0
       if(videoInit == 0 ){
+        debugger
         let data = new Uint8Array(event.initSegment.byteLength + event.data.byteLength);
         data.set(event.initSegment, 0);
         data.set(event.data, event.initSegment.byteLength);
         console.log(muxjs.mp4.tools.inspect(data));
-        //buffer.appendBuffer(data);
+        buffer.appendBuffer(data);
         videoInit = 1
         console.log("第一次初始化")
       }else{
-        //buffer.appendBuffer(new Uint8Array(event.data));
+        buffer.appendBuffer(new Uint8Array(event.data));
         console.log("后续直接添加")
       }
      
