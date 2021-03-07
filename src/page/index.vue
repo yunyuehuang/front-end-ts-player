@@ -42,6 +42,10 @@ export default {
           url:"https://v.qiexiazai.com/fuckyou-9527/ru{{num}}/3500kb/hls/index{{index}}.ts"
         },
         {
+          name:"rosi",
+          url:"https://v.qiexiazai.com/fuckyou-9527/rs{{num}}/index{{index}}.ts"
+        },
+        {
           name:"约模私拍",
           url:"https://v.qiexiazai.com/fuckyou-9527/wuying{{num}}/8000kb/hls/index{{index}}.ts"
         }

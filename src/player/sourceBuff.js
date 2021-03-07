@@ -86,7 +86,7 @@ export default class sourceBuff{
   }
 
   playAppend(){
-    this.buffer.timestampOffset = this.nowTask.buffItem.sTime >0 ? this.nowTask.buffItem.sTime - 0.3 : this.nowTask.buffItem.sTime
+    this.buffer.timestampOffset = this.nowTask.buffItem.sTime >0 ? this.nowTask.buffItem.sTime - 0.2 : this.nowTask.buffItem.sTime
     this.buffer.appendBuffer(this.nowTask.buffItem.buff)
   }
 
@@ -111,43 +111,45 @@ export default class sourceBuff{
     if(this.nowTask.type == "append"){
       this.bufferIng.end = this.mediaSource.duration
 
-      let overTime = this.bufferIng.end - this.bufferIng.start - 5
-      if(overTime > 10){
+      let removeTime = this.bufferIng.end - this.bufferIng.start
+      if(removeTime > 8){ //如果buffer长度大于8，则移除前n秒,使得buffer区域只剩下2秒
+        removeTime = removeTime - 2
         let stime = this.bufferIng.start
         this.addTask({
           type:"remove",
           sTime: stime ,
-          eTime:this.bufferIng.start + overTime
-        },1)
+          eTime:this.bufferIng.start + removeTime
+        }, 1) //将任务push到队列中，保证下一个就会执行，优先执行删除任务，执行完之后才能append本次数据。否则可能导致本次删除还没执行，下一次数据又来到了。
         this.nowTask.addRemove = 1
-        this.bufferIng.start += overTime
+        this.bufferIng.start += removeTime
       }
       if(this.nowTask.addRemove){
         this.lastTask = this.nowTask
-        this.nowTask = null
-        this.doTask()
-        return
+        //this.doTask() 
+        //return
       }else{
         Event.emit("appened", this.nowTask.data)
       }
     }
-    if(this.nowTask.type == "remove"){
+    
+    else if(this.nowTask.type == "remove"){
       if(this.lastTask && this.lastTask.addRemove){
-        Event.emit("appened", this.lastTask.data)
+        Event.emit("appened", this.lastTask.data) //继续append上次被remove打断的数据
         this.lastTask = null
       }
     }
-    if(this.nowTask.type == "play_append"){
-      let overTime = this.playBufferTime.end - this.playBufferTime.start - 30
-      if(overTime > 30){
+
+    else if(this.nowTask.type == "play_append"){
+      let removeTime = this.playBufferTime.end - this.playBufferTime.start
+      if(removeTime > 30){
+        removeTime = removeTime - 10
         let stime = this.playBufferTime.start
         this.addTask({
           type:"remove",
           sTime: stime ,
-          eTime:this.playBufferTime.start + overTime
-        },1)
-        this.playBufferTime.start += overTime
-        this.doTask()
+          eTime:this.playBufferTime.start + removeTime
+        }, 1)
+        this.playBufferTime.start += removeTime
       }
       if(this.nowTask.reset){
         this.playBufferTime.start = this.nowTask.buffItem.sTime
@@ -155,8 +157,6 @@ export default class sourceBuff{
       this.playBufferTime.end = this.nowTask.buffItem.eTime
       console.log("增加播放块", this.playBufferTime)
     }
-
-
 
     this.nowTask = null
     this.doTask()

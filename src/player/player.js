@@ -38,13 +38,12 @@ export default class myPlayer{
     })
 
     Event.on("appened",(data)=>{
-    
-      this.bufferCache.addBuffer(this.mediaSource.duration, data)
-      this.urlIndex ++ 
       if(Event.globalData.playStatus == 3){
         Event.emit("stoped")
         return
       }
+      this.bufferCache.addBuffer(this.mediaSource.duration, data)
+      this.urlIndex ++ 
       this.loadTs()
     })
   }
@@ -69,41 +68,40 @@ export default class myPlayer{
   }
   attachHtmlEle(el){
     this.htmlEle = el
-   
-    this.htmlEle.addEventListener('timeupdate', (e)=> {
-      if(this.sourceBuff.nowTask && this.sourceBuff.nowTask.type == "play_append"){
-        return
-      }
-     
-      let reset = 0
-      let ts = -1
-      if(this.sourceBuff.playBufferTime.end <= this.htmlEle.currentTime || this.sourceBuff.playBufferTime.start >= this.htmlEle.currentTime){
-        ts = this.htmlEle.currentTime
-        reset = 1
-        this.sourceBuff.addTask({
-          type:"play_remove"
-        })
-      }else{
-        let overLoadPlayTime = this.sourceBuff.playBufferTime.end - this.htmlEle.currentTime - 2
-        if(overLoadPlayTime < 0){
-          ts = this.htmlEle.currentTime + 2
-          
-        }
-      }
-      if(ts > -1 ){
-        let buffItem = this.bufferCache.getBuffer(ts)
-        if(buffItem){
-          this.sourceBuff.addTask({
-            type:"play_append",
-            buffItem:buffItem,
-            reset:reset
-          })
-          this.sourceBuff.doTask()
-        }
-      }
-    })
+    this.htmlEle.addEventListener('timeupdate', this.onVideoPlay.bind(this))
+  }
 
+  onVideoPlay(e){
+    if(this.sourceBuff.nowTask && (this.sourceBuff.nowTask.type == "play_append" || this.sourceBuff.nowTask.type == "play_remove")){
+      return
+    }
    
+    let reset = 0 //是否需要重置 playBufferTime
+    let ts = -1
+    if(this.sourceBuff.playBufferTime.end <= this.htmlEle.currentTime || this.sourceBuff.playBufferTime.start >= this.htmlEle.currentTime){
+      //当前播放点不在已经buffer的区域内
+      ts = this.htmlEle.currentTime
+      reset = 1
+      this.sourceBuff.addTask({
+        type:"play_remove"
+      })
+    }else{
+      //当前播放点在已经buffer的区域内，判断后2秒的内容是否已加载，未加载则加载后2秒的内容
+      if(this.htmlEle.currentTime + 2 >=  this.sourceBuff.playBufferTime.end){
+        ts = this.htmlEle.currentTime + 2
+      }
+    }
+    if(ts > -1 ){
+      let buffItem = this.bufferCache.getBuffer(ts)
+      if(buffItem){
+        this.sourceBuff.addTask({
+          type:"play_append",
+          buffItem:buffItem,
+          reset:reset
+        })
+        this.sourceBuff.doTask()
+      }
+    }
   }
 
   loadTs(){

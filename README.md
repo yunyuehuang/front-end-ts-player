@@ -1,39 +1,16 @@
-# 前端ts播放器
+#### 前端ts播放器
 
 #### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+ajax加载ts文件，append到mediasource中。video元素播放mediasource中的流。下载文件的过程中设定了请求超时和加载超时，超时后会自动重试。
 
-#### 软件架构
-软件架构说明
+不同于常规播放器当前播放点在哪就只加载播放点附近数据的策略。本播放器会从头到尾按顺序一直加载文件，直到文件全部加载完毕。
 
+视频总时长一开始为0，随着ts流不断被append，视频总时长会自动更新，增长。
 
-#### 安装教程
+由于soucebuffer有大小限制，所以要控制soucebuffer中的内容长度。比如当判断当前buffer中的内容长度大于30秒时，就删除前20秒的内容，视频的总长度是不会收到影响的。边加载边删除，保证buffer不会溢出。
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+一共维护了两组加载状态。第一组就是上面说的，边加载下一个ts文件边在超过时长的时候进行删除。这部分buffer是为了推进下载进度的buffer。而另一组是用于支持当前播放的buffer。
 
-#### 使用说明
+播放buffer是当前播放点附近的buffer，随着播放进度的推进，要持续地append后面的内容。当然也要保证播放buffer的长度不超过一定的值，如果超过了也需要执行remove操作，把播放点之前的内容给移除掉。
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+通过ajax加载到的ts数据都在本地用一个数组保存了起来。就算是在sourcebuffer中被remove了，后续也可以通过这个本地数组将数据重新添加进sourcebuffer中。

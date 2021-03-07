@@ -5,11 +5,7 @@ import Event from "./event"
 export default class tsLoader{
 
   constructor(){
-    this.videoStatus = 1
-    Event.on("change_video",()=>{
-      this.videoStatus = 2
-    })
-    this.requestStep = 0
+    this.requestStep = 0 //请求阶段 1请求中  2响应中
     this.timer = null
     this.url = ""
   }
@@ -26,6 +22,7 @@ export default class tsLoader{
     this.xhr = xhr
     xhr.onerror = (e)=> {
       console.log(e, "请求错误")
+      this.timeOutDeal()
     }
 
     xhr.onloadend = (e)=> {
