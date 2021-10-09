@@ -23,6 +23,8 @@
 
 <script>
 import Event from "@src/player/event.js"
+import GlobalStatus from "../player/globalStatus.js"
+import Enum from "../player/enum.js"
 import Player from "@src/player/player.js"
 import $ from "jquery"
 export default {
@@ -31,7 +33,7 @@ export default {
     return {
       listIndex:2,
       num:'32',
-      globalStatus:0,
+      globalStatus:Enum.playStatus.INIT,
       list: [
         {
           name:"1系列",
@@ -56,13 +58,7 @@ export default {
   computed: {
     // a computed getter
     globalStatusStr: function () {
-      let status = {
-        "0":"未开始",
-        "1":"下载中",
-        "2":"完成",
-        "3":"切换中"
-      }
-      return status[this.globalStatus]
+      return Enum.playStatusStr[this.globalStatus]
     }
   },
   mounted(){
@@ -72,7 +68,7 @@ export default {
     this.player.attachHtmlEle(video)
 
     Event.on("status_change", (e)=>{
-      Event.globalData.playStatus = e
+      GlobalStatus.playStatus = e
       this.globalStatus = e
     })
 
