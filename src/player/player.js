@@ -12,7 +12,7 @@ export default class myPlayer{
     this.mediaSource = null
     
     this.urlIndex = 0
-    this.isAddHeadInfo = 1
+    this.isAddHeadInfo = 1 //解析第一个文件时需要添加头信息
     this.bufferCache = new bufferCache()
     this.sourceBuff = null
     this.tsLoader = new tsLoader()

@@ -12,5 +12,13 @@ export default {
     "1":"下载中",
     "2":"完成",
     "3":"切换中"
+  },
+  playEvent:{
+    TSLOADED:'tsloaded',
+    TRANSFERED:'transfered',
+    APPENDED:'appened',
+    STATUS_CHANGE:'status_change',
+    STOPED:'stoped',
   }
+  
 }
