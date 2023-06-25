@@ -2,17 +2,16 @@
   <div class="wrap" id="wrap">
     <div class="left">
       <div class="list-box">
-        <div class="item" v-for="(item, index) in list" :class="{ active: index == listIndex }" @click="listIndex = index;num=''">
-          {{item.name}}
-        </div>
+       
       </div>
     </div>
 
     <div class="right">
       <div class="operate">
-        选集<input v-model="num">
+        地址<input v-model="url">
         <div class="btn" @click="play">获取</div>
       </div>
+      <div class="">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}</div>
       <div>状态：{{globalStatusStr}}</div>
       <div id="video-wrapper">
         <video controls ref="video"></video>
@@ -31,26 +30,12 @@ export default {
   name: 'App',
   data(){
     return {
-      listIndex:2,
-      num:'32',
+      videoSlice:0,
+      loadVideoSlice:0,
+      url:'https://b1.szjal.cn/ppvod/3C58E8BA8A65023822AC7D7F75F2ECD8.m3u8',
       globalStatus:Enum.playStatus.INIT,
       list: [
-        {
-          name:"1系列",
-          url:"https://v.qiexiazai.com/fuckyou-9527/xr{{num}}/8000kb/hls/index{{index}}.ts"
-        },
-        {
-          name:"r1",
-          url:"https://v.qiexiazai.com/fuckyou-9527/ru{{num}}/3500kb/hls/index{{index}}.ts"
-        },
-        {
-          name:"rosi",
-          url:"https://v.qiexiazai.com/fuckyou-9527/rs{{num}}/index{{index}}.ts"
-        },
-        {
-          name:"约模私拍",
-          url:"https://v.qiexiazai.com/fuckyou-9527/wuying{{num}}/8000kb/hls/index{{index}}.ts"
-        }
+       
       ],
       player:null
     }
@@ -72,6 +57,10 @@ export default {
       this.globalStatus = e
     })
 
+    Event.on("loaded_num", (e)=>{
+      this.loadVideoSlice = e
+    })
+
     Event.on("stoped", (e)=>{
       Event.globalData.playStatus = 0
       this.play()
@@ -80,8 +69,8 @@ export default {
   methods:{
 
     play(){
-      if(!this.num){
-        alert("请先输入选集")
+      if(!this.url){
+        alert("请先输入地址")
         return
       }
       
@@ -89,17 +78,31 @@ export default {
         Event.emit("status_change", 3)
         return
       }
-      let url = this.list[this.listIndex].url.replace("{{num}}", this.num)
-      this.player.setTsUrl(url)
-      this.player.play()
+
+      $.get(this.url, (data) => {
+        let myURL = new URL(this.url);
+        console.log(myURL)
+        let urlList = []
+        data.split("\n").map((e)=>{
+          if (e.indexOf('.ts') > -1) {
+            urlList.push(`${myURL.origin}${e}`)
+          }
+        })
+        this.videoSlice = urlList.length
+        this.player.setTsUrls(urlList)
+        this.player.play()
+      })
+
+
+
     }
 
   }
 }
 </script>
 
-<style lang="scss">
+<style lang="less">
   //此处scss内图片的相对路径都是以本vue文件为基础的，而不是已scss文件自己为基础
-  @import '../scss/index.scss';
+  @import '../scss/index.less';
 
 </style>

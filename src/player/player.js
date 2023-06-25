@@ -5,6 +5,7 @@ import decoder from "./decoder.js"
 import bufferCache from "./bufferCache"
 import sourceBuff from "./sourceBuff"
 import Event from "./event"
+import Enum from "../enum"
 export default class myPlayer{
   
   constructor() {
@@ -43,6 +44,12 @@ export default class myPlayer{
         return
       }
       this.bufferCache.addBuffer(this.mediaSource.duration, data)
+      Event.emit("loaded_num", this.urlIndex + 1)
+      if (this.urlIndex >= this.tsUrls.length -1) {
+        Event.emit("status_change", 2)
+        return
+      }
+
       this.urlIndex ++ 
       this.loadTs()
     })
@@ -51,7 +58,7 @@ export default class myPlayer{
   play(){
     this.isAddHeadInfo = 1
     this.urlIndex = 0
-    Event.emit("status_change", 1)
+    Event.emit("status_change", Enum.playStatus.PLAYING)
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
     this.mediaSource.addEventListener('sourceopen', ()=> {
@@ -63,15 +70,17 @@ export default class myPlayer{
    
   }
 
-  setTsUrl(url){
-    this.tsUrl = url
+  setTsUrls(url){
+    this.tsUrls = url
   }
   attachHtmlEle(el){
     this.htmlEle = el
     this.htmlEle.addEventListener('timeupdate', this.onVideoPlay.bind(this))
+    this.htmlEle.addEventListener('seeked', this.onVideoPlay.bind(this))
   }
 
   onVideoPlay(e){
+    console.log("拖动")
     if(this.sourceBuff.nowTask && (this.sourceBuff.nowTask.type == "play_append" || this.sourceBuff.nowTask.type == "play_remove")){
       return
     }
@@ -91,7 +100,7 @@ export default class myPlayer{
         ts = this.htmlEle.currentTime + 2
       }
     }
-    if(ts > -1 ){
+    if(ts > -1){
       let buffItem = this.bufferCache.getBuffer(ts)
       if(buffItem){
         this.sourceBuff.addTask({
@@ -105,7 +114,7 @@ export default class myPlayer{
   }
 
   loadTs(){
-    let url = this.tsUrl.replace("{{index}}", this.urlIndex)
+    let url = this.tsUrls[this.urlIndex]
     this.tsLoader.loadTsFile(url)
   }
 
