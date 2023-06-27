@@ -112,17 +112,17 @@ export default class sourceBuff{
       this.bufferIng.end = this.mediaSource.duration
 
       let removeTime = this.bufferIng.end - this.bufferIng.start
-      if(removeTime > 8){ //如果buffer长度大于8，则移除前n秒,使得buffer区域只剩下2秒
-        removeTime = removeTime - 2
-        let stime = this.bufferIng.start
-        this.addTask({
-          type:"remove",
-          sTime: stime ,
-          eTime:this.bufferIng.start + removeTime
-        }, 1) //将任务push到队列中，保证下一个就会执行，优先执行删除任务，执行完之后才能append本次数据。否则可能导致本次删除还没执行，下一次数据又来到了。
-        this.nowTask.addRemove = 1
-        this.bufferIng.start += removeTime
-      }
+      // if(removeTime > 8){ //如果buffer长度大于8，则移除前n秒,使得buffer区域只剩下2秒
+      //   removeTime = removeTime - 2
+      //   let stime = this.bufferIng.start
+      //   this.addTask({
+      //     type:"remove",
+      //     sTime: stime ,
+      //     eTime:this.bufferIng.start + removeTime
+      //   }, 1) //将任务push到队列中，保证下一个就会执行，优先执行删除任务，执行完之后才能append本次数据。否则可能导致本次删除还没执行，下一次数据又来到了。
+      //   this.nowTask.addRemove = 1
+      //   this.bufferIng.start += removeTime
+      // }
       if(this.nowTask.addRemove){
         this.lastTask = this.nowTask
         //this.doTask() 
@@ -141,16 +141,16 @@ export default class sourceBuff{
 
     else if(this.nowTask.type == "play_append"){
       let removeTime = this.playBufferTime.end - this.playBufferTime.start
-      if(removeTime > 30){
-        removeTime = removeTime - 10
-        let stime = this.playBufferTime.start
-        this.addTask({
-          type:"remove",
-          sTime: stime ,
-          eTime:this.playBufferTime.start + removeTime
-        }, 1)
-        this.playBufferTime.start += removeTime
-      }
+      // if(removeTime > 30){
+      //   removeTime = removeTime - 10
+      //   let stime = this.playBufferTime.start
+      //   this.addTask({
+      //     type:"remove",
+      //     sTime: stime ,
+      //     eTime:this.playBufferTime.start + removeTime
+      //   }, 1)
+      //   this.playBufferTime.start += removeTime
+      // }
       if(this.nowTask.reset){
         this.playBufferTime.start = this.nowTask.buffItem.sTime
       }
