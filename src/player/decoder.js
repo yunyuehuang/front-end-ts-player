@@ -3,9 +3,12 @@ import Event from "./event"
 
 export default {
   status:0,
-  transferFormat(data, isAddHeadInfo, cb) {
+  //eventData 内容为 [buff, index] 
+  transferFormat(eventData, cb) {
     // 将源数据从ArrayBuffer格式保存为可操作的Uint8Array格式
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+    let data = eventData[0]
+    let isAddHeadInfo = eventData[1] == 0
     var segment = new Uint8Array(data);
 
   
@@ -44,7 +47,7 @@ export default {
         data = new Uint8Array(event.data)      
       }
 
-      Event.emit("transfered", data)
+      Event.emit("transfered", [data, eventData[1]])
 
       //console.log(muxjs.mp4.tools.inspect(data));
   

@@ -10,6 +10,7 @@
       <div class="operate">
         地址<input v-model="url">
         <div class="btn" @click="play">获取</div>
+        并发数<input v-model="threadNum">
       </div>
       <div class="">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}</div>
       <div>状态：{{globalStatusStr}}</div>
@@ -32,8 +33,9 @@ export default {
     return {
       videoSlice:0,
       loadVideoSlice:0,
-      url:'https://b1.szjal.cn/ppvod/3C58E8BA8A65023822AC7D7F75F2ECD8.m3u8',
+      url:'https://b1.szjal.cn/ppvod/06F0EDEEEEEA72AD3AD975C25AE33B6C.m3u8',
       globalStatus:Enum.playStatus.INIT,
+      threadNum:5,
       list: [
        
       ],
@@ -90,6 +92,7 @@ export default {
         })
         this.videoSlice = urlList.length
         this.player.setTsUrls(urlList)
+        this.player.setThreadNum(this.threadNum)
         this.player.play()
       })
 

@@ -11,7 +11,9 @@ export default class myPlayer{
   constructor() {
     this.htmlEle = null
     this.mediaSource = null
-    
+    this.tsUrls = []
+    this.readySlice = []
+    this.threadNum = 1
     this.urlIndex = 0
     this.isAddHeadInfo = 1 //解析第一个文件时需要添加头信息
     this.bufferCache = new bufferCache()
@@ -23,17 +25,13 @@ export default class myPlayer{
   bindEvent(){
   
     Event.on("tsloaded",(data)=>{
-      decoder.transferFormat(data, this.isAddHeadInfo)
-      if(this.isAddHeadInfo){
-        this.isAddHeadInfo = 0
-      }
+      decoder.transferFormat(data)
     })
 
     Event.on("transfered",(data)=>{
-      
-      this.sourceBuff.addTask({
-        type:"append",
-        data:data
+      this.sourceBuff.addSlice({
+        index: data[1],
+        data: data[0]
       })
       this.sourceBuff.doTask()
     })
@@ -51,7 +49,6 @@ export default class myPlayer{
       }
 
       this.urlIndex ++ 
-      this.loadTs()
     })
   }
 
@@ -73,10 +70,14 @@ export default class myPlayer{
   setTsUrls(url){
     this.tsUrls = url
   }
+  setThreadNum(e){
+    this.threadNum = e
+  }
   attachHtmlEle(el){
     this.htmlEle = el
     this.htmlEle.addEventListener('timeupdate', this.onVideoPlay.bind(this))
     this.htmlEle.addEventListener('seeked', this.onVideoPlay.bind(this))
+    this.htmlEle.addEventListener('play', this.onVideoPlay.bind(this))
   }
 
   onVideoPlay(e){
@@ -92,7 +93,7 @@ export default class myPlayer{
       ts = this.htmlEle.currentTime
       reset = 1
       this.sourceBuff.addTask({
-        type:"play_remove"
+        type:"play_remove" 
       })
     }else{
       //当前播放点在已经buffer的区域内，判断后2秒的内容是否已加载，未加载则加载后2秒的内容
@@ -114,8 +115,7 @@ export default class myPlayer{
   }
 
   loadTs(){
-    let url = this.tsUrls[this.urlIndex]
-    this.tsLoader.loadTsFile(url)
+    this.tsLoader.loadTsFile(this.tsUrls, this.threadNum)
   }
 
 
