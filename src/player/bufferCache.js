@@ -22,7 +22,8 @@ export default class bufferCache{
   addBuffer(timeStamp, data){
     let stime = 0
     if(this.bufferObj.list.length > 0){
-      stime = this.bufferObj.list[this.bufferObj.list.length -1].eTime
+      stime = this.bufferObj.list[this.bufferObj.list.length -1].eTime - 0.05
+
     }
     let buffItem = {
       sTime: stime,

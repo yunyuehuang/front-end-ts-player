@@ -19,7 +19,7 @@ export default class sourceBuff{
       end:0
     }
 
-    this.appendIndex = -1
+    this.appendIndex = 0
     this.status = STATUS_INIT
   }
 
@@ -63,7 +63,7 @@ export default class sourceBuff{
     }
 
     let nextSlice = this.sliceQueue[0]
-    if (nextSlice.index > this.appendIndex + 1) {
+    if (nextSlice.index > this.appendIndex) {
       return
     }
     this.sliceQueue.shift()
@@ -145,20 +145,20 @@ export default class sourceBuff{
   }
 
   playAppend(){
-    this.buffer.timestampOffset = this.nowTask.buffItem.sTime >0 ? this.nowTask.buffItem.sTime - 0.2 : this.nowTask.buffItem.sTime
+    this.buffer.timestampOffset = this.nowTask.buffItem.sTime
     this.buffer.appendBuffer(this.nowTask.buffItem.buff)
   }
 
 
   appendData(){
-    if(this.nowTask.timestampOffset){
-      this.buffer.timestampOffset = this.nowTask.timestampOffset
-    }else{
-      if(this.mediaSource.duration > 0){
-        //添加buffer偏移量
-        this.buffer.timestampOffset = this.mediaSource.duration - 0.5
-      }
+    
+    if(this.mediaSource.duration > 0){
+      //添加buffer偏移量
+      this.buffer.timestampOffset = this.mediaSource.duration - 0.05
+    } else {
+      this.buffer.timestampOffset = 0
     }
+    
     this.buffer.appendBuffer(this.nowTask.data);
   }
   removeData(){
@@ -170,10 +170,11 @@ export default class sourceBuff{
     this.status = STATUS_INIT
    
     if(this.nowTask.type == "append"){
+      Event.emit("appened", [this.nowTask.data, this.appendIndex])
+      Event.emit("loaded_num", this.appendIndex + 1)
+      console.log(this.appendIndex)
+     
       this.appendIndex ++
-      //上一个任务类型为添加bufferIng端的长度
-      Event.emit("appened", this.nowTask.data)
-
       //检测是否需要进行remove
       this.bufferIng.end = this.mediaSource.duration
       let removeTime = this.bufferIng.end - this.bufferIng.start

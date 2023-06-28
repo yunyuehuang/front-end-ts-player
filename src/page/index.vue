@@ -14,6 +14,9 @@
       </div>
       <div class="">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}</div>
       <div>状态：{{globalStatusStr}}</div>
+      <div class="status">
+        <div v-for="item in statusBox" :class="item"></div>
+      </div>
       <div id="video-wrapper">
         <video controls ref="video"></video>
       </div>
@@ -36,9 +39,7 @@ export default {
       url:'https://b1.szjal.cn/ppvod/06F0EDEEEEEA72AD3AD975C25AE33B6C.m3u8',
       globalStatus:Enum.playStatus.INIT,
       threadNum:5,
-      list: [
-       
-      ],
+      statusBox: [],
       player:null
     }
   },
@@ -61,6 +62,18 @@ export default {
 
     Event.on("loaded_num", (e)=>{
       this.loadVideoSlice = e
+      if (e >= this.videoSlice) {
+        Event.emit("status_change", 2)
+        return
+      }
+    })
+
+    Event.on("tsloaded", (e)=>{
+      this.$set(this.statusBox, e[1], 'load');
+    });
+
+    Event.on("appened",(e)=>{
+      this.$set(this.statusBox, e[1], 'append');
     })
 
     Event.on("stoped", (e)=>{
@@ -87,7 +100,8 @@ export default {
         let urlList = []
         data.split("\n").map((e)=>{
           if (e.indexOf('.ts') > -1) {
-            urlList.push(`${myURL.origin}${e}`)
+            this.statusBox.push('init')
+            urlList.push(`${myURL.origin}/${e}`)
           }
         })
         this.videoSlice = urlList.length

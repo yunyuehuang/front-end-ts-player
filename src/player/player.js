@@ -14,7 +14,6 @@ export default class myPlayer{
     this.tsUrls = []
     this.readySlice = []
     this.threadNum = 1
-    this.urlIndex = 0
     this.isAddHeadInfo = 1 //解析第一个文件时需要添加头信息
     this.bufferCache = new bufferCache()
     this.sourceBuff = null
@@ -41,20 +40,14 @@ export default class myPlayer{
         Event.emit("stoped")
         return
       }
-      this.bufferCache.addBuffer(this.mediaSource.duration, data)
-      Event.emit("loaded_num", this.urlIndex + 1)
-      if (this.urlIndex >= this.tsUrls.length -1) {
-        Event.emit("status_change", 2)
-        return
-      }
-
-      this.urlIndex ++ 
+      this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
+    
+     
     })
   }
 
   play(){
     this.isAddHeadInfo = 1
-    this.urlIndex = 0
     Event.emit("status_change", Enum.playStatus.PLAYING)
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
@@ -87,16 +80,17 @@ export default class myPlayer{
     }
    
     let reset = 0 //是否需要重置 playBufferTime
-    let ts = -1
+    let ts = -1 
     if(this.sourceBuff.playBufferTime.end <= this.htmlEle.currentTime || this.sourceBuff.playBufferTime.start >= this.htmlEle.currentTime){
-      //当前播放点不在已经buffer的区域内
+      //当前播放点不在已经buffer的区域内， ts = 新播放点的值
       ts = this.htmlEle.currentTime
       reset = 1
       this.sourceBuff.addTask({
         type:"play_remove" 
       })
     }else{
-      //当前播放点在已经buffer的区域内，判断后2秒的内容是否已加载，未加载则加载后2秒的内容
+      //当前播放点在已经buffer的区域内，判断后2秒的内容是否已加载，未加载则加载后2秒的内容 ts=2后的时间点
+      console.log(this.htmlEle.currentTime, this.htmlEle.currentTime + 2, this.sourceBuff.playBufferTime)
       if(this.htmlEle.currentTime + 2 >=  this.sourceBuff.playBufferTime.end){
         ts = this.htmlEle.currentTime + 2
       }
