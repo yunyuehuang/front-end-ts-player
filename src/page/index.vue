@@ -1,26 +1,25 @@
 <template>
   <div class="wrap" id="wrap">
-    <div class="left">
-      <div class="list-box">
-       
-      </div>
+    <div class="operate">
+      地址<input v-model="url" class="input-url">
+      <div class="btn" @click="play">获取</div>
+    </div>  
+    <div class="operate">
+      ts文件正则<input v-model="tsUrl" class="input-url">
+      <p class="desc">会将将填写内容的{ts}替换为m3u8文件中的ts地址</p>
+    </div>
+    <div class="operate">
+      并发数<input v-model="threadNum">
+    </div>
+    <div class="operate">状态：{{globalStatusStr}}</div>
+    <div class="operate">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}</div>
+    <div class="status">
+      <div v-for="item in statusBox" :class="item"></div>
+    </div>
+    <div id="video-wrapper">
+      <video controls ref="video"></video>
     </div>
 
-    <div class="right">
-      <div class="operate">
-        地址<input v-model="url">
-        <div class="btn" @click="play">获取</div>
-        并发数<input v-model="threadNum">
-      </div>
-      <div class="">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}</div>
-      <div>状态：{{globalStatusStr}}</div>
-      <div class="status">
-        <div v-for="item in statusBox" :class="item"></div>
-      </div>
-      <div id="video-wrapper">
-        <video controls ref="video"></video>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -37,6 +36,7 @@ export default {
       videoSlice:0,
       loadVideoSlice:0,
       url:'https://b1.szjal.cn/ppvod/06F0EDEEEEEA72AD3AD975C25AE33B6C.m3u8',
+      tsUrl:'',
       globalStatus:Enum.playStatus.INIT,
       threadNum:5,
       statusBox: [],
@@ -44,7 +44,6 @@ export default {
     }
   },
   computed: {
-    // a computed getter
     globalStatusStr: function () {
       return Enum.playStatusStr[this.globalStatus]
     }
@@ -101,7 +100,13 @@ export default {
         data.split("\n").map((e)=>{
           if (e.indexOf('.ts') > -1) {
             this.statusBox.push('init')
-            urlList.push(`${myURL.origin}/${e}`)
+            let url
+            if (this.tsUrl) {
+              url = this.tsUrl.replace('{ts}', e)
+            } else {
+              url = `${myURL.origin}/${e}`
+            }
+            urlList.push(url)
           }
         })
         this.videoSlice = urlList.length
@@ -109,11 +114,7 @@ export default {
         this.player.setThreadNum(this.threadNum)
         this.player.play()
       })
-
-
-
     }
-
   }
 }
 </script>

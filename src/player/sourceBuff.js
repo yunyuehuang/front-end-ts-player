@@ -1,7 +1,4 @@
-
 import Event from "./event"
-let STATUS_INIT = 1
-let STATUS_BUSY = 2
 export default class sourceBuff{
 
   constructor() {
@@ -20,7 +17,6 @@ export default class sourceBuff{
     }
 
     this.appendIndex = 0
-    this.status = STATUS_INIT
   }
 
 
@@ -53,11 +49,6 @@ export default class sourceBuff{
   }
 
   getSlice(){
-    
-    if (this.status == STATUS_BUSY) {
-      return
-    }
-
     if (this.sliceQueue.length == 0) {
       return 
     }
@@ -67,7 +58,6 @@ export default class sourceBuff{
       return
     }
     this.sliceQueue.shift()
-    this.status = STATUS_BUSY
     this.addTask({
       type:"append",
       data: nextSlice.data
@@ -111,14 +101,15 @@ export default class sourceBuff{
   }
 
   doTask(){
+    if(this.nowTask){
+      return
+    }
+
     if(this.queue.length <= 0){
       this.getSlice()
       return
     }
 
-    if(this.nowTask){
-      return
-    }
     this.nowTask = this.queue.pop()
     try {
       if(this.nowTask.type == "append"){
@@ -136,8 +127,6 @@ export default class sourceBuff{
     } catch (error) {
       this.nowTask = null
     }
-
-   
   }
 
   playRemove(){
@@ -166,14 +155,11 @@ export default class sourceBuff{
   }
 
   bufferEnd(){
-  
-    this.status = STATUS_INIT
-   
+
     if(this.nowTask.type == "append"){
       Event.emit("appened", [this.nowTask.data, this.appendIndex])
       Event.emit("loaded_num", this.appendIndex + 1)
-      console.log(this.appendIndex)
-     
+
       this.appendIndex ++
       //检测是否需要进行remove
       this.bufferIng.end = this.mediaSource.duration
