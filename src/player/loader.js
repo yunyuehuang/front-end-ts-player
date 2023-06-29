@@ -56,6 +56,8 @@ export default class tsLoader{
     xhr.responseType = "arraybuffer";
     xhr.send();
 
+    Event.emit("tsload", xhr.urlIndex);
+
     xhr.timer = setTimeout(() => {
       this.timeOutDeal(xhr)
     }, 3000)

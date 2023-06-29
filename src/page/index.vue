@@ -12,7 +12,7 @@
       并发数<input v-model="threadNum">
     </div>
     <div class="operate">状态：{{globalStatusStr}}</div>
-    <div class="operate">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}</div>
+    <div class="operate">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}，加载中{{loadingVideoSlice}}</div>
     <div class="status">
       <div v-for="item in statusBox" :class="item"></div>
     </div>
@@ -35,6 +35,7 @@ export default {
     return {
       videoSlice:0,
       loadVideoSlice:0,
+      loadingVideoSlice: 0,
       url:'https://b1.szjal.cn/ppvod/06F0EDEEEEEA72AD3AD975C25AE33B6C.m3u8',
       tsUrl:'',
       globalStatus:Enum.playStatus.INIT,
@@ -67,8 +68,14 @@ export default {
       }
     })
 
+    Event.on("tsload", (e)=>{
+      this.$set(this.statusBox, e, 'load');
+      this.updateLoading()
+    });
+
     Event.on("tsloaded", (e)=>{
-      this.$set(this.statusBox, e[1], 'load');
+      this.$set(this.statusBox, e[1], 'loaded');
+      this.updateLoading()
     });
 
     Event.on("appened",(e)=>{
@@ -81,6 +88,16 @@ export default {
     })
   },
   methods:{
+
+    updateLoading(){
+      let num = 0
+      this.statusBox.map((e)=>{
+        if (e == 'load') {
+          num++
+        }
+      })
+      this.loadingVideoSlice = num
+    },
 
     play(){
       if(!this.url){
