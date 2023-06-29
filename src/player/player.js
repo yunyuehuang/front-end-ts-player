@@ -11,12 +11,10 @@ export default class myPlayer{
   constructor() {
     this.htmlEle = null
     this.mediaSource = null
-    this.tsUrls = []
-    this.readySlice = []
-    this.threadNum = 1
-    this.isAddHeadInfo = 1 //解析第一个文件时需要添加头信息
-    this.bufferCache = new bufferCache()
     this.sourceBuff = null
+    this.tsUrls = []
+    this.threadNum = 1
+    this.bufferCache = new bufferCache()
     this.tsLoader = new tsLoader()
     this.bindEvent()
   }
@@ -47,7 +45,6 @@ export default class myPlayer{
   }
 
   play(){
-    this.isAddHeadInfo = 1
     Event.emit("status_change", Enum.playStatus.PLAYING)
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
@@ -80,7 +77,7 @@ export default class myPlayer{
     }
    
     let reset = 0 //是否需要重置 playBufferTime
-    let ts = -1 
+    let ts = -1 //新的加载时间点
     if(this.sourceBuff.playBufferTime.end <= this.htmlEle.currentTime || this.sourceBuff.playBufferTime.start >= this.htmlEle.currentTime){
       //当前播放点不在已经buffer的区域内， ts = 新播放点的值
       ts = this.htmlEle.currentTime

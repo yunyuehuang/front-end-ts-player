@@ -6,7 +6,6 @@ export default class sourceBuff{
     this.buffer = null
     this.queue = []
     this.sliceQueue = []
-    this.removeIng = 0
     this.bufferIng = {
       start:0,
       end:0
