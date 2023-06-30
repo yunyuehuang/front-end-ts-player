@@ -5,11 +5,12 @@
       <div class="btn" @click="play">获取</div>
     </div>  
     <div class="operate">
-      ts文件正则<input v-model="tsUrl" class="input-url">
-      <p class="desc">会将将填写内容的{ts}替换为m3u8文件中的ts地址</p>
+      ts文件正则<input v-model="tsUrl" class="input-url" placeholder="https://xxxxx/xx/{ts}">
+      <p class="desc">会将填写内容的{ts}替换为m3u8文件中的ts文件地址</p>
     </div>
     <div class="operate">
-      并发数<input v-model="threadNum">
+      并发数<input v-model="threadNum">  
+      超时时长<input v-model="timeOut">
     </div>
     <div class="operate">状态：{{globalStatusStr}}</div>
     <div class="operate">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}，加载中{{loadingVideoSlice}}</div>
@@ -25,7 +26,6 @@
 
 <script>
 import Event from "@src/player/event.js"
-import GlobalStatus from "../player/globalStatus.js"
 import Enum from "../player/enum.js"
 import Player from "@src/player/player.js"
 import $ from "jquery"
@@ -40,6 +40,7 @@ export default {
       tsUrl:'',
       globalStatus:Enum.playStatus.INIT,
       threadNum:5,
+      timeOut:10,
       statusBox: [],
       player:null
     }
@@ -56,14 +57,14 @@ export default {
     this.player.attachHtmlEle(video)
 
     Event.on("status_change", (e)=>{
-      GlobalStatus.playStatus = e
       this.globalStatus = e
+      Event.globalData.globalStatus = e
     })
 
     Event.on("loaded_num", (e)=>{
       this.loadVideoSlice = e
       if (e >= this.videoSlice) {
-        Event.emit("status_change", 2)
+        Event.emit("status_change", Enum.playStatus.COMPLETE)
         return
       }
     })
@@ -80,11 +81,6 @@ export default {
 
     Event.on("appened",(e)=>{
       this.$set(this.statusBox, e[1], 'append');
-    })
-
-    Event.on("stoped", (e)=>{
-      Event.globalData.playStatus = 0
-      this.play()
     })
   },
   methods:{
@@ -105,8 +101,8 @@ export default {
         return
       }
       
-      if(Event.globalData.playStatus == 1){
-        Event.emit("status_change", 3)
+      if(Event.globalData.playStatus == Enum.playStatus.LOADING){
+        alert("正在播放中")
         return
       }
 
@@ -128,7 +124,10 @@ export default {
         })
         this.videoSlice = urlList.length
         this.player.setTsUrls(urlList)
-        this.player.setThreadNum(this.threadNum)
+        this.player.setLoaderConfig({
+          threadNum: this.threadNum,
+          timeOut: this.timeOut
+        })
         this.player.play()
       })
     }
@@ -137,7 +136,7 @@ export default {
 </script>
 
 <style lang="less">
-  //此处scss内图片的相对路径都是以本vue文件为基础的，而不是已scss文件自己为基础
+  //此处scss内图片的相对路径都是以本vue文件为基础的，而不是以scss文件自己为基础
   @import '../scss/index.less';
 
 </style>

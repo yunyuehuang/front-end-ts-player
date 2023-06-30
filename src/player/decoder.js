@@ -65,7 +65,7 @@ export default {
         var bytes = new Uint8Array(remuxedInitSegment.byteLength + remuxedBytesLength)
       } catch (error) {
         console.log(error,"下载完成")
-        app.globalStatus = 2
+      
         return
       }
      

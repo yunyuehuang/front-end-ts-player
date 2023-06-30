@@ -18,7 +18,6 @@ export default {
     TRANSFERED:'transfered',
     APPENDED:'appened',
     STATUS_CHANGE:'status_change',
-    STOPED:'stoped',
   }
   
 }

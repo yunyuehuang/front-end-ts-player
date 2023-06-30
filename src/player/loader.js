@@ -10,6 +10,7 @@ export default class tsLoader{
   constructor(){
     this.urlIndex = 0
     this.threadNum = 5
+    this.timeOut = 10
     this.urls = []
   }
   ab2str(buf) {
@@ -17,11 +18,12 @@ export default class tsLoader{
   }
 
 
-  loadTsFile(urls, threadNum) {
-    console.log("并发数", threadNum)
-    //并行下载
+  loadTsFile(urls, config) {
+    this.threadNum = config.threadNum
+    this.timeOut = config.timeOut
+
     this.urls = urls
-    for (let i = 0; i < threadNum; i++) {
+    for (let i = 0; i < this.threadNum; i++) {
       this.beginLoad()
     }
   }
@@ -60,7 +62,7 @@ export default class tsLoader{
 
     xhr.timer = setTimeout(() => {
       this.timeOutDeal(xhr)
-    }, 3000)
+    }, this.timeOut * 1000)
 
   }
 
@@ -74,7 +76,7 @@ export default class tsLoader{
       if(xhr.readyState == 3){
         xhr.timer = setTimeout(()=>{
           this.timeOutDeal(xhr)
-        }, 5000)
+        }, this.timeOut * 1000)
        
         xhr.requestStep = STEP_DOING
       }
@@ -105,15 +107,11 @@ export default class tsLoader{
 
     console.log("等下重发")
     xhr.timer = setTimeout(()=> {
-      if (Event.globalData.playStatus == 3) { //请求异常的时候，
-        Event.emit("stoped")
-        return
-      }
       xhr.open('GET', xhr.url);
       xhr.send();
       xhr.timer = setTimeout(()=>{
         this.timeOutDeal(xhr)
-      }, 3000)
+      }, this.timeOut * 1000)
     }, 1000)
   }
 

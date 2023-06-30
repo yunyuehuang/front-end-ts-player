@@ -5,7 +5,7 @@ import decoder from "./decoder.js"
 import bufferCache from "./bufferCache"
 import sourceBuff from "./sourceBuff"
 import Event from "./event"
-import Enum from "../enum"
+import Enum from "./enum"
 export default class myPlayer{
   
   constructor() {
@@ -13,7 +13,10 @@ export default class myPlayer{
     this.mediaSource = null
     this.sourceBuff = null
     this.tsUrls = []
-    this.threadNum = 1
+    this.loaderConfig = {
+      threadNum: 5,
+      timeOut: 10
+    }
     this.bufferCache = new bufferCache()
     this.tsLoader = new tsLoader()
     this.bindEvent()
@@ -34,18 +37,12 @@ export default class myPlayer{
     })
 
     Event.on("appened",(data)=>{
-      if(Event.globalData.playStatus == 3){
-        Event.emit("stoped")
-        return
-      }
       this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
-    
-     
     })
   }
 
   play(){
-    Event.emit("status_change", Enum.playStatus.PLAYING)
+    Event.emit("status_change", Enum.playStatus.LOADING)
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
     this.mediaSource.addEventListener('sourceopen', ()=> {
@@ -60,8 +57,8 @@ export default class myPlayer{
   setTsUrls(url){
     this.tsUrls = url
   }
-  setThreadNum(e){
-    this.threadNum = e
+  setLoaderConfig(e){
+    this.loaderConfig = e
   }
   attachHtmlEle(el){
     this.htmlEle = el
@@ -106,7 +103,7 @@ export default class myPlayer{
   }
 
   loadTs(){
-    this.tsLoader.loadTsFile(this.tsUrls, this.threadNum)
+    this.tsLoader.loadTsFile(this.tsUrls, this.loaderConfig)
   }
 
 
