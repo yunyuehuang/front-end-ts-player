@@ -37,7 +37,7 @@ export default class myPlayer{
     })
 
     Event.on("appened",(data)=>{
-      this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
+      let buffItem = this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
     })
   }
 
@@ -68,7 +68,7 @@ export default class myPlayer{
   }
 
   onVideoPlay(e){
-    console.log("拖动")
+    
     if(this.sourceBuff.nowTask && (this.sourceBuff.nowTask.type == "play_append" || this.sourceBuff.nowTask.type == "play_remove")){
       return
     }

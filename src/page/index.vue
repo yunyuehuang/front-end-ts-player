@@ -11,6 +11,7 @@
     <div class="operate">
       并发数<input v-model="threadNum">  
       超时时长<input v-model="timeOut">
+      拼接偏移量<input v-model="pinOffset">
     </div>
     <div class="operate">状态：{{globalStatusStr}}</div>
     <div class="operate">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}，加载中{{loadingVideoSlice}}</div>
@@ -36,8 +37,9 @@ export default {
       videoSlice:0,
       loadVideoSlice:0,
       loadingVideoSlice: 0,
-      url:'https://b1.szjal.cn/ppvod/06F0EDEEEEEA72AD3AD975C25AE33B6C.m3u8',
-      tsUrl:'',
+      pinOffset:0.05,
+      url:'https://cdn.zoubuting.com/20210703/Klgppf2j/hls/index.m3u8',
+      tsUrl:'{ts}',
       globalStatus:Enum.playStatus.INIT,
       threadNum:5,
       timeOut:10,
@@ -105,6 +107,8 @@ export default {
         alert("正在播放中")
         return
       }
+
+      Event.globalData.pinOffset = this.pinOffset
 
       $.get(this.url, (data) => {
         let myURL = new URL(this.url);

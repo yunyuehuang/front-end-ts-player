@@ -1,4 +1,6 @@
 
+import event from "./event.js"
+
 export default class bufferCache{
 
   constructor() {
@@ -22,7 +24,7 @@ export default class bufferCache{
   addBuffer(timeStamp, data){
     let stime = 0
     if(this.bufferObj.list.length > 0){
-      stime = this.bufferObj.list[this.bufferObj.list.length -1].eTime - 0.05
+      stime = this.bufferObj.list[this.bufferObj.list.length -1].eTime - event.globalData.pinOffset
 
     }
     let buffItem = {
@@ -32,7 +34,7 @@ export default class bufferCache{
     }
     this.bufferObj.list.push(buffItem)
     this.bufferObj.actIndex = 0
-    return
+    return buffItem
 
     
     if(this.bufferObj.actIndex == -1){

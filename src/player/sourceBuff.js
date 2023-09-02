@@ -142,7 +142,7 @@ export default class sourceBuff{
     
     if(this.mediaSource.duration > 0){
       //添加buffer偏移量
-      this.buffer.timestampOffset = this.mediaSource.duration - 0.05
+      this.buffer.timestampOffset = this.mediaSource.duration - Event.globalData.pinOffset
     } else {
       this.buffer.timestampOffset = 0
     }

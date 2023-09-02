@@ -3,6 +3,7 @@ export default {
 
   globalData:{
     playStatus: 0, //0未开始 1下载中 2已完成 3切换中
+    pinOffset: 0.05
   },
 
   eventObj:{},
