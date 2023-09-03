@@ -38,11 +38,12 @@ export default class myPlayer{
 
     Event.on("appened",(data)=>{
       let buffItem = this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
+      console.log(this.bufferCache)
     })
   }
 
   play(){
-    Event.emit("status_change", Enum.playStatus.LOADING)
+
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
     this.mediaSource.addEventListener('sourceopen', ()=> {

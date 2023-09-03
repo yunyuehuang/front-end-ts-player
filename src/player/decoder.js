@@ -46,10 +46,9 @@ export default {
       }else{
         data = new Uint8Array(event.data)      
       }
-
       Event.emit("transfered", [data, eventData[1]])
 
-      //console.log(muxjs.mp4.tools.inspect(data));
+      // console.log(muxjs.mp4.tools.inspect(data));
   
     });
     // 监听转换完成事件，拼接最后结果并传入MediaSource

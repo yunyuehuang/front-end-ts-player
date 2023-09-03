@@ -24,12 +24,11 @@ export default class bufferCache{
   addBuffer(timeStamp, data){
     let stime = 0
     if(this.bufferObj.list.length > 0){
-      stime = this.bufferObj.list[this.bufferObj.list.length -1].eTime - event.globalData.pinOffset
-
+      stime = this.bufferObj.list[this.bufferObj.list.length -1].eTime
     }
     let buffItem = {
       sTime: stime,
-      eTime: timeStamp,
+      eTime: event.globalData.currentBufferTime,
       buff:new Uint8Array(data)
     }
     this.bufferObj.list.push(buffItem)

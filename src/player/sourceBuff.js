@@ -84,7 +84,7 @@ export default class sourceBuff{
       // 转换为只含音频的mp4
       this.buffer = this.mediaSource.addSourceBuffer('audio/mp4;codecs="' + (codecsArray[1] || codecsArray[0]) + '"');
     }
-    //buffer.mode = 'sequence'
+    // this.buffer.mode = 'segments'
     //buffer.addEventListener('updatestart', logevent);
     this.buffer.addEventListener('updateend', this.bufferEnd.bind(this));
     //buffer.addEventListener('error', logevent);
@@ -140,13 +140,14 @@ export default class sourceBuff{
 
   appendData(){
     
-    if(this.mediaSource.duration > 0){
-      //添加buffer偏移量
-      this.buffer.timestampOffset = this.mediaSource.duration - Event.globalData.pinOffset
-    } else {
-      this.buffer.timestampOffset = 0
-    }
-    
+    // if(this.mediaSource.duration > 0){
+    //   //添加buffer偏移量
+    //   // this.buffer.timestampOffset = this.mediaSource.duration - Event.globalData.pinOffset
+    //   this.
+    // } else {
+    //   this.buffer.timestampOffset = 0
+    // }
+    this.buffer.timestampOffset = Event.globalData.currentBufferTime
     this.buffer.appendBuffer(this.nowTask.data);
   }
   removeData(){
@@ -154,10 +155,11 @@ export default class sourceBuff{
   }
 
   bufferEnd(){
-
     if(this.nowTask.type == "append"){
+      Event.globalData.currentBufferTime += Event.globalData.lengthList[this.appendIndex]
       Event.emit("appened", [this.nowTask.data, this.appendIndex])
       Event.emit("loaded_num", this.appendIndex + 1)
+      console.log("当前视频总长度", Event.globalData.currentBufferTime, this.mediaSource.duration)
 
       this.appendIndex ++
       //检测是否需要进行remove
