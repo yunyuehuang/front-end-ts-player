@@ -1,6 +1,8 @@
 const puppeteer = require('puppeteer');
 let browser
-puppeteer.launch().then(data=>{
+puppeteer.launch({
+  args: ['--no-sandbox']
+}).then(data=>{
   browser=data
 })
 

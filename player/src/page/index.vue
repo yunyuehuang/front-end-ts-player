@@ -191,7 +191,7 @@ export default {
         $.get(this.url, this.afterGetM3u8)
       } else if (this.pageUrl){
         $.ajax({  
-        url: 'http://127.0.0.7:3000/m3u8',  // 请求的 URL  
+        url: 'http://129.204.63.215:11200/m3u8',  // 请求的 URL  
         type: 'POST',                          // 请求方法，如 GET、POST 等  
         dataType: 'json',                     // 期望的响应数据类型，如 json、xml、html 等  
         data: {                              // 发送到服务器的数据  
