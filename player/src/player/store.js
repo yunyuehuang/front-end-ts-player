@@ -1,5 +1,5 @@
 
-let fields = ['pinOffset', 'url','tsUrl','threadNum','timeOut',]
+let fields = ['pinOffset', 'url','tsUrl','threadNum','timeOut','pageUrl']
 
 export default {
 

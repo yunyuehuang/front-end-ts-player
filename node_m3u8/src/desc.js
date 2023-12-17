@@ -1,9 +1,10 @@
 const puppeteer = require('puppeteer');
-let browser 
-puppeteer.launch()
+let browser
+puppeteer.launch().then(data=>{
+  browser=data
+})
 
-
-export async function getM3u8(url){
+exports.getM3u8 = async function(url){
   const page = await browser.newPage();
   let rsData
   // 订阅 reponse 事件，参数是一个 reponse 实体
@@ -14,29 +15,19 @@ export async function getM3u8(url){
       if (data.indexOf(".m3u8") > -1) {
         return
       }
-      rsData = data
-      await browser.close();
-      console.log("取消请求")
+      rsData = {url: response.url(), data:data}
+      await page.close();
     }
   })
   try {
     await page.goto(url,{
-     waitUntil: 'networkidle0'
+      waitUntil: 'networkidle0'
     });
   } catch (error) {
-    console.log(error.message)
-
     if (error.message == "Navigating frame was detached") {
-      console.log("取消了")
       return rsData
     }
+    console.log(error.message)
   }
-  await browser.close();
+  await page.close();
 }
- 
-// #EXTM3U
-// #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1000000,RESOLUTION=960x540
-// /20230806/3ZsLFzi5/1000kb/hls/index.m3u8
-
-
-console.log("请求1")

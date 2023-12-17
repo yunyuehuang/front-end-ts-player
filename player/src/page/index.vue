@@ -1,16 +1,17 @@
 <template>
   <div class="wrap" id="wrap">
     <div class="operate">
-      地址<input v-model="url" class="input-url">
+      页面地址<input v-model="pageUrl" class="input-url"><br/>
+      m3u8地址<input v-model="url" placeholder="填了优先取这个" class="input-url">
       <div class="btn" @click="play">获取</div>
     </div>  
-    <div class="operate">
+    <!-- <div class="operate">
       ts文件正则<input v-model="tsUrl" class="input-url" placeholder="https://xxxxx/xx/{ts}">
       <p class="desc">会将填写内容的{ts}替换为m3u8文件中的ts文件地址</p>
-    </div>
+    </div> -->
     <div class="operate">
       并发数<input v-model="threadNum">  
-      超时时长<input v-model="timeOut"><br/>
+      超时时长<input v-model="timeOut">秒<br/>
       拼接偏移量<input v-model="pinOffset">
       起始下载时间点<input v-model="playBeginTime">分
     </div>
@@ -37,8 +38,9 @@ export default {
   data(){
     return {
       pinOffset:0.05,
+      pageUrl:'',
       url:'https://cdn.zoubuting.com/20210703/Klgppf2j/hls/index.m3u8',
-      tsUrl:'{ts}',
+      tsUrl:'',
       threadNum:5,
       timeOut:10,
       playBeginTime:0,
@@ -104,8 +106,73 @@ export default {
       this.loadingVideoSlice = num
     },
 
+    afterGetM3u8(data){
+      let myURL = new URL(this.url);
+      console.log(myURL)
+      let urlList = []
+      let lengthList = []
+      let arr = data.split("\n")
+      for (const i in arr) {
+        let e = arr[i]
+        if (e.indexOf('METHOD=') > -1) {
+          alert("暂时无法播放加密视频 " + e)
+          Event.emit("status_change", Enum.playStatus.INIT)
+          return
+        }
+
+
+        if (e.indexOf('.ts') > -1) {
+          this.statusBox.push('init')
+          let url
+          if (this.tsUrl) {
+            url = this.tsUrl.replace('{ts}', e)
+          } else {
+            if (e.indexOf('http') > -1) {
+              url = e
+            } else {
+              url = `${myURL.origin}/${e}`
+            }
+          }
+          urlList.push(url)
+        }
+        if (e.indexOf('EXTINF') > -1) {
+          let match = /\d+(\.\d+)?/.exec(e);
+    
+          if (!match) {
+            alert("时长解析错误")
+            Event.emit("status_change", Enum.playStatus.INIT)
+            return
+          }
+          lengthList.push(Number(match[0]))
+        }
+      }
+      let time = lengthList[0]
+      if (this.playBeginTime > 0) {
+        while(this.playBeginTime*60 > time){
+  
+          lengthList.shift();
+          urlList.shift()
+          if (lengthList.length == 0) {
+            alert("起始播放时间超过视频总时长")
+            Event.emit("status_change", Enum.playStatus.INIT)
+            return
+          }
+          
+          time += lengthList[0]
+        }
+      }
+      Event.globalData.lengthList = lengthList
+      this.videoSlice = urlList.length
+      this.player.setTsUrls(urlList)
+      this.player.setLoaderConfig({
+        threadNum: this.threadNum,
+        timeOut: this.timeOut
+      })
+      this.player.play()
+    },
+
     play(){
-      if(!this.url){
+      if(!this.url && !this.pageUrl){
         alert("请先输入地址")
         return
       }
@@ -120,56 +187,32 @@ export default {
       Store.setConfig(this)
       Event.globalData.pinOffset = this.pinOffset
 
-      $.get(this.url, (data) => {
-        let myURL = new URL(this.url);
-        console.log(myURL)
-        let urlList = []
-        let lengthList = []
-        data.split("\n").map((e)=>{
-          if (e.indexOf('.ts') > -1) {
-            this.statusBox.push('init')
-            let url
-            if (this.tsUrl) {
-              url = this.tsUrl.replace('{ts}', e)
-            } else {
-              url = `${myURL.origin}/${e}`
-            }
-            urlList.push(url)
+      if (this.url) {
+        $.get(this.url, this.afterGetM3u8)
+      } else if (this.pageUrl){
+        $.ajax({  
+        url: 'http://127.0.0.7:3000/m3u8',  // 请求的 URL  
+        type: 'POST',                          // 请求方法，如 GET、POST 等  
+        dataType: 'json',                     // 期望的响应数据类型，如 json、xml、html 等  
+        data: {                              // 发送到服务器的数据  
+            url: this.pageUrl,  
+        },
+        success: (response) =>{        // 请求成功时的回调函数  
+          console.log(response); 
+          if (response.code !=0) {
+            Event.emit("status_change", Enum.playStatus.INIT)
+            alert("请求失败" + response.data)
+            return
           }
-          if (e.indexOf('EXTINF') > -1) {
-            let match = /\d+(\.\d+)?/.exec(e);
-      
-            if (!match) {
-              alert("时长解析错误")
-              return
-            }
-            lengthList.push(Number(match[0]))
-          }
-        })
-
-        let time = lengthList[0]
-        if (this.playBeginTime > 0) {
-          while(this.playBeginTime*60 > time){
-    
-            lengthList.shift();
-            urlList.shift()
-            if (lengthList.length == 0) {
-              alert("起始播放时间超过视频总时长")
-              return
-            }
-            
-            time += lengthList[0]
-          }
-        }
-        Event.globalData.lengthList = lengthList
-        this.videoSlice = urlList.length
-        this.player.setTsUrls(urlList)
-        this.player.setLoaderConfig({
-          threadNum: this.threadNum,
-          timeOut: this.timeOut
-        })
-        this.player.play()
+          this.url = response.data.url
+          this.afterGetM3u8(response.data.data)
+        },  
+        error: function(jqXHR, textStatus, errorThrown) { // 请求失败时的回调函数  
+          alert("请求失败")
+          Event.emit("status_change", Enum.playStatus.INIT)
+        },  
       })
+    }
     }
   }
 }
