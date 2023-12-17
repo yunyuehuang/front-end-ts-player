@@ -182,6 +182,11 @@ export default {
         return
       }
 
+      if (location.href.indexOf("https") > -1) {
+        alert("请使用http访问")
+        return
+      }
+
       Event.emit("status_change", Enum.playStatus.LOADING)
 
       Store.setConfig(this)
