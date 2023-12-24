@@ -10,7 +10,7 @@ module.exports = {
   devtool: "eval-source-map",
   plugins: [
     new HtmlWebpackPlugin({
-      title: '高速播放器',
+      title: '阿林播放器',
       filename: 'index.html', //输出文件
       template: 'public/index.html'
     }),

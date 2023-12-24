@@ -1,5 +1,6 @@
 <template>
   <div class="wrap" id="wrap">
+    <div class="title">阿林播放器</div>
     <div class="operate">
       页面地址<input v-model="pageUrl" class="input-url"><br/>
       m3u8地址<input v-model="url" placeholder="填了优先取这个" class="input-url">
