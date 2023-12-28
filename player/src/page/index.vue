@@ -2,9 +2,12 @@
   <div class="wrap" id="wrap">
     <div class="title">阿林播放器</div>
     <div class="operate">
-      页面地址<input v-model="pageUrl" class="input-url"><br/>
-      m3u8地址<input v-model="url" placeholder="填了优先取这个" class="input-url">
-      <div class="btn" @click="play">获取</div>
+      页面地址<input v-model="pageUrl" class="input-url">
+      <div class="btn" @click="play(1)">网址获取</div>
+    </div>
+    <div class="operate">
+      m3u8地址<input v-model="url" placeholder="xxx.m3u8" class="input-url">
+      <div class="btn" @click="play(0)">m3u8获取</div>
     </div>  
     <!-- <div class="operate">
       ts文件正则<input v-model="tsUrl" class="input-url" placeholder="https://xxxxx/xx/{ts}">
@@ -16,8 +19,14 @@
       拼接偏移量<input v-model="pinOffset">
       起始下载时间点<input v-model="playBeginTime">分
     </div>
-    <div class="operate">状态：{{globalStatusStr}}</div>
-    <div class="operate">视频片段数：{{videoSlice}}，已加载{{loadVideoSlice}}，加载中{{loadingVideoSlice}}</div>
+   
+    <div class="operate">
+      &nbsp;&nbsp;状态：{{globalStatusStr}}
+      &nbsp;&nbsp;<span class="color-box"></span>总片段:{{videoSlice}}&nbsp;&nbsp;
+      <span class="color-box load"></span>加载中:{{loadingVideoSlice}}&nbsp;&nbsp;
+      <span class="color-box loaded"></span>已加载:{{loadVideoSlice}}&nbsp;&nbsp;
+      <span class="color-box append"></span>已解析:{{loadVideoSlice}}
+    </div>
     <div class="status">
       <div v-for="item in statusBox" :class="item"></div>
     </div>
@@ -172,11 +181,20 @@ export default {
       this.player.play()
     },
 
-    play(){
-      if(!this.url && !this.pageUrl){
-        alert("请先输入地址")
-        return
+    play(type){
+
+      if (type == 1) {
+        if(!this.pageUrl){
+          alert("请先输入网页地址")
+          return
+        }
+      } else {
+        if(!this.url){
+          alert("请先输入m3u8地址")
+          return
+        }
       }
+      
       
       if(Event.globalData.playStatus == Enum.playStatus.LOADING){
         alert("正在播放中")
@@ -193,9 +211,9 @@ export default {
       Store.setConfig(this)
       Event.globalData.pinOffset = this.pinOffset
 
-      if (this.url) {
+      if (type == 0) {
         $.get(this.url, this.afterGetM3u8)
-      } else if (this.pageUrl){
+      } else if (type == 1){
         $.ajax({  
         url: 'http://129.204.63.215:11200/m3u8',  // 请求的 URL  
         type: 'POST',                          // 请求方法，如 GET、POST 等  
