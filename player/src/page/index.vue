@@ -6,11 +6,11 @@
     </div>
     <div class="search">
       <input v-model="pageUrl" class="input-url">
-      <div class="btn" @click="play(1)"><img src="/img/ccs.png">网址获取</div>
+      <div class="btn" @click="play(1)"><img src="img/ccs.png">网址获取</div>
     </div>
     <div class="search">
       <input v-model="url" placeholder="xxx.m3u8" class="input-url">
-      <div class="btn" @click="play(0)"><img src="/img/ccs.png">m3u8获取</div>
+      <div class="btn" @click="play(0)"><img src="img/ccs.png">m3u8获取</div>
     </div>  
     <!-- <div class="operate">
       ts文件正则<input v-model="tsUrl" class="input-url" placeholder="https://xxxxx/xx/{ts}">
