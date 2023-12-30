@@ -60,6 +60,7 @@
         </div>
         <div class="mbox loaded">
           <div class="spinner" :style="{'--loaded-left': loadedVideoSlice.cssLeft, '--loaded-left-color': loadedVideoSlice.cssLeftColor, '--loaded-right': loadedVideoSlice.cssRight}">
+            <div class="mask"></div>
             <i class="spinner-progress"></i>
           </div>
           <div class="num" >{{loadedVideoSlice.num}}</div>
@@ -67,6 +68,7 @@
         </div>
         <div class="mbox append">
           <div class="spinner" :style="{'--append-left': appendVideoSlice.cssLeft, '--append-left-color': appendVideoSlice.cssLeftColor, '--append-right': appendVideoSlice.cssRight}">
+            <div class="mask"></div>
             <i class="spinner-progress"></i>
           </div>
           <div class="num">{{appendVideoSlice.num}}</div>
@@ -236,7 +238,7 @@ export default {
 
 
         if (e.indexOf('.ts') > -1) {
-          this.statusBox.push('init')
+     
           let url
           if (this.tsUrl) {
             url = this.tsUrl.replace('{ts}', e)
@@ -248,6 +250,7 @@ export default {
             }
           }
           urlList.push(url)
+          this.statusBox.push('init')
         }
         if (e.indexOf('EXTINF') > -1) {
           let match = /\d+(\.\d+)?/.exec(e);
