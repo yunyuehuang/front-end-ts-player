@@ -39,38 +39,37 @@
       </div>
       <div class="mbox-wrap">
         <div class="mbox">
-          <div class="spinner">
-            <i class="spinner-progress"></i>
+          <div class="spinner" :class="globalStatusStr == '下载中' ? 'red' : ''">
+            
           </div>
           <div class="num">{{globalStatusStr}}</div>
           <div class="text">状态</div>
         </div>
-        <div class="mbox">
+        <div class="mbox all">
           <div class="spinner">
-            <i class="spinner-progress"></i>
           </div>
           <div class="num">{{videoSlice}}</div>
           <div class="text">总片段</div>
         </div>
         <div class="mbox load">
           <div class="spinner">
-            <i class="spinner-progress"></i>
+          
           </div>
           <div class="num">{{loadingVideoSlice}}</div>
           <div class="text">加载中</div>
         </div>
         <div class="mbox loaded">
-          <div class="spinner">
+          <div class="spinner" :style="{'--loaded-left': loadedVideoSlice.cssLeft, '--loaded-left-color': loadedVideoSlice.cssLeftColor, '--loaded-right': loadedVideoSlice.cssRight}">
             <i class="spinner-progress"></i>
           </div>
-          <div class="num">{{loadVideoSlice}}</div>
+          <div class="num" >{{loadedVideoSlice.num}}</div>
           <div class="text">已加载</div>
         </div>
         <div class="mbox append">
-          <div class="spinner">
+          <div class="spinner" :style="{'--append-left': appendVideoSlice.cssLeft, '--append-left-color': appendVideoSlice.cssLeftColor, '--append-right': appendVideoSlice.cssRight}">
             <i class="spinner-progress"></i>
           </div>
-          <div class="num">{{loadVideoSlice}}</div>
+          <div class="num">{{appendVideoSlice.num}}</div>
           <div class="text">已解析</div>
         </div>
       </div>
@@ -107,7 +106,18 @@ export default {
       playBeginTime:0,
 
       videoSlice:0,
-      loadVideoSlice:0, 
+      loadedVideoSlice:{
+        num:0,
+        cssLeft:"rotate(180deg)",
+        cssRight:"rotate(-180deg)",
+        cssLeftColor:"#edeaff"
+      }, //已加载 
+      appendVideoSlice:{
+        num:0,
+        cssLeft:"rotate(180deg)",
+        cssRight:"rotate(-180deg)",
+        cssLeftColor:"#ebf7f7"
+      }, //已解析
       loadingVideoSlice: 0, //加载中
       globalStatus:Enum.playStatus.INIT,
       statusBox: [],
@@ -134,7 +144,7 @@ export default {
     })
 
     Event.on("loaded_num", (e)=>{
-      this.loadVideoSlice = e
+
       if (e >= this.videoSlice) {
         Event.emit("status_change", Enum.playStatus.COMPLETE)
         return
@@ -153,18 +163,60 @@ export default {
 
     Event.on("appened",(e)=>{
       this.$set(this.statusBox, e[1], 'append');
+      this.updateLoading()
     })
   },
   methods:{
 
     updateLoading(){
-      let num = 0
+      this.loadingVideoSlice = 0
+      this.loadedVideoSlice.num = 0
+      this.appendVideoSlice.num = 0
       this.statusBox.map((e)=>{
         if (e == 'load') {
-          num++
+          this.loadingVideoSlice++
+        }
+        if (e == 'loaded') {
+          this.loadedVideoSlice.num++
+        }
+        if (e == 'append') {
+          this.appendVideoSlice.num++
         }
       })
-      this.loadingVideoSlice = num
+
+      this.loadedVideoSlice.num += this.appendVideoSlice.num
+      let loadedPer = this.getRowCss(this.loadedVideoSlice.num)
+      this.loadedVideoSlice.cssLeft = `rotate(${loadedPer.left}deg)` 
+      this.loadedVideoSlice.cssRight = `rotate(${loadedPer.right}deg)` 
+      if (loadedPer.right < 0) {
+        this.loadedVideoSlice.cssLeftColor = "#edeaff"
+      } else {
+        this.loadedVideoSlice.cssLeftColor = "#a58dff"
+      }
+    
+      loadedPer = this.getRowCss(this.appendVideoSlice.num)
+      this.appendVideoSlice.cssLeft = `rotate(${loadedPer.left}deg)` 
+      this.appendVideoSlice.cssRight = `rotate(${loadedPer.right}deg)` 
+      if (loadedPer.right < 0) {
+        this.appendVideoSlice.cssLeftColor = "#ebf7f7"
+      } else {
+        this.appendVideoSlice.cssLeftColor = "#48d1ca"
+      }
+    },
+
+
+    getRowCss(num){
+      let per = num / this.videoSlice
+      let res = {left:0, right:0}
+      if (per <= 0.5) {
+        res.right = -180 + Math.ceil(180 * (per / 0.5))
+        res.left=180
+      } else {
+        res.right = 0
+        let j = per - 0.5
+        res.left = Math.ceil(180 * (j / 0.5))
+      }
+      return res
     },
 
     afterGetM3u8(data){
@@ -173,6 +225,7 @@ export default {
       let urlList = []
       let lengthList = []
       let arr = data.split("\n")
+
       for (const i in arr) {
         let e = arr[i]
         if (e.indexOf('METHOD=') > -1) {
@@ -207,6 +260,7 @@ export default {
           lengthList.push(Number(match[0]))
         }
       }
+      
       let time = lengthList[0]
       if (this.playBeginTime > 0) {
         while(this.playBeginTime*60 > time){
