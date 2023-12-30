@@ -1,12 +1,15 @@
 <template>
   <div class="wrap" id="wrap">
-    <div class="title">阿林播放器</div>
-    <div class="operate">
-      页面地址<input v-model="pageUrl" class="input-url">
+    <div class="title">
+      <div class="t1">阿林播放器</div>
+      <div class="t2">看剧更轻松</div>
+    </div>
+    <div class="search">
+      <input v-model="pageUrl" class="input-url">
       <div class="btn" @click="play(1)">网址获取</div>
     </div>
-    <div class="operate">
-      m3u8地址<input v-model="url" placeholder="xxx.m3u8" class="input-url">
+    <div class="search">
+      <input v-model="url" placeholder="xxx.m3u8" class="input-url">
       <div class="btn" @click="play(0)">m3u8获取</div>
     </div>  
     <!-- <div class="operate">
@@ -14,21 +17,69 @@
       <p class="desc">会将填写内容的{ts}替换为m3u8文件中的ts文件地址</p>
     </div> -->
     <div class="operate">
-      并发数<input v-model="threadNum">  
-      超时时长<input v-model="timeOut">秒<br/>
-      拼接偏移量<input v-model="pinOffset">
-      起始下载时间点<input v-model="playBeginTime">分
-    </div>
-   
-    <div class="operate">
-      &nbsp;&nbsp;状态：{{globalStatusStr}}
-      &nbsp;&nbsp;<span class="color-box"></span>总片段:{{videoSlice}}&nbsp;&nbsp;
-      <span class="color-box load"></span>加载中:{{loadingVideoSlice}}&nbsp;&nbsp;
-      <span class="color-box loaded"></span>已加载:{{loadVideoSlice}}&nbsp;&nbsp;
-      <span class="color-box append"></span>已解析:{{loadVideoSlice}}
-    </div>
-    <div class="status">
-      <div v-for="item in statusBox" :class="item"></div>
+      <div class="setting">
+        <div class="item-input">
+          <span class="text">并发数</span>
+          <input v-model="threadNum"> 
+        </div>
+        <div class="item-input">
+          <span class="text">超时时长(秒)</span>
+          <input v-model="timeOut"> 
+        </div>
+        <div class="item-input">
+          <span class="text">拼接偏移</span>
+          <input v-model="pinOffset"> 
+        </div>
+        <div class="item-input">
+          <span class="text">起始时间(分)</span>
+          <input v-model="playBeginTime"> 
+        </div>
+
+
+      </div>
+      <div class="mbox-wrap">
+        <div class="mbox">
+          <div class="spinner">
+            <i class="spinner-progress"></i>
+          </div>
+          <div class="num">{{globalStatusStr}}</div>
+          <div class="text">状态</div>
+        </div>
+        <div class="mbox">
+          <div class="spinner">
+            <i class="spinner-progress"></i>
+          </div>
+          <div class="num">{{videoSlice}}</div>
+          <div class="text">总片段</div>
+        </div>
+        <div class="mbox load">
+          <div class="spinner">
+            <i class="spinner-progress"></i>
+          </div>
+          <div class="num">{{loadingVideoSlice}}</div>
+          <div class="text">加载中</div>
+        </div>
+        <div class="mbox loaded">
+          <div class="spinner">
+            <i class="spinner-progress"></i>
+          </div>
+          <div class="num">{{loadVideoSlice}}</div>
+          <div class="text">已加载</div>
+        </div>
+        <div class="mbox append">
+          <div class="spinner">
+            <i class="spinner-progress"></i>
+          </div>
+          <div class="num">{{loadVideoSlice}}</div>
+          <div class="text">已解析</div>
+        </div>
+      </div>
+
+
+
+      <div class="status">
+        <div v-for="item in statusBox" :class="item"></div>
+      </div>
     </div>
     <div id="video-wrapper">
       <video controls ref="video"></video>
@@ -56,8 +107,8 @@ export default {
       playBeginTime:0,
 
       videoSlice:0,
-      loadVideoSlice:0,
-      loadingVideoSlice: 0,
+      loadVideoSlice:0, 
+      loadingVideoSlice: 0, //加载中
       globalStatus:Enum.playStatus.INIT,
       statusBox: [],
       player:null
@@ -159,7 +210,7 @@ export default {
       let time = lengthList[0]
       if (this.playBeginTime > 0) {
         while(this.playBeginTime*60 > time){
-  
+          this.statusBox.shift();
           lengthList.shift();
           urlList.shift()
           if (lengthList.length == 0) {
