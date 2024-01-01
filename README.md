@@ -7,6 +7,8 @@
 ## 体验地址
 http://yunyuehuang.gitee.io/front-end-ts-player
 
+![alt_text](./doc/play.png)
+
 ## 前端播放m3u8视频的思路
 ts格式的视频，是将一个完整的视频分割为若干个ts文件，同时会生成一个m3u8文件，保存了每个ts文件的时长，格式详情等等信息。
 播放器在播放这样被拆分过的视频时，会先去获取m3u8描述文件，然后通过这个文件知道每个ts文件的url，然后才去加载对应的ts文件。
