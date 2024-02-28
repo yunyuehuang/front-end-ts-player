@@ -9,7 +9,7 @@ if [ "${all_pid}" = "" ]; then
     
 else
     echo "stop: kill all $proc process"
-    kill -TERM ${all_pid}
+    kill -9 ${all_pid}
 
 fi
 
