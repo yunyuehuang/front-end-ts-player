@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer');
+let logs = require ("./log.js")
 let browser
 puppeteer.launch({
   args: ['--no-sandbox']
@@ -15,17 +16,17 @@ exports.getM3u8 = async function(url){
   page.on('response', async (response) => {
     try {
       if (pattern.test(response.url())) {
-        console.log("解析", response.url())
+        logs.log("解析", response.url())
         let data = await response.text()
         if (data.indexOf(".m3u8") > -1) {
           return
         }
         rsData = {url: response.url(), data:data}
         await page.close();
-        console.log("解析到了，关闭页面")
+        logs.log("解析到了，关闭页面")
       }
     } catch (error) {
-      console.log("body err", error)
+      logs.log("body err", error)
     }
 
   })
@@ -38,7 +39,7 @@ exports.getM3u8 = async function(url){
     if (error.message == "Navigating frame was detached") {
       return rsData
     }
-    console.log(error.message)
+    logs.log(error.message)
   }
   await page.close();
 }

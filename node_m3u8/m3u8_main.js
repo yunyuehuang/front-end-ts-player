@@ -1,5 +1,5 @@
 
 require ("./src/http.js")
+let logs = require ("./src/log.js")
 
-
-console.log("begin")
+logs.log("begin")
