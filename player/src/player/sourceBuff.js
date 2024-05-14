@@ -16,8 +16,14 @@ export default class sourceBuff{
     }
 
     this.appendIndex = 0
+    this.isStop = false
   }
-
+  stop(){
+    this.isStop = true
+    this.buffer = null
+    this.queue = []
+    this.sliceQueue = []
+  }
 
   // 元素添加至队列中，队列中的元素按照slice.index顺序排序
   addSlice(slice){
@@ -100,6 +106,9 @@ export default class sourceBuff{
   }
 
   doTask(){
+    if (this.isStop) {
+      return
+    }
     if(this.nowTask){
       return
     }
@@ -155,6 +164,9 @@ export default class sourceBuff{
   }
 
   bufferEnd(){
+    if (this.isStop) {
+      return
+    }
     if(this.nowTask.type == "append"){
       Event.globalData.currentBufferTime += Event.globalData.lengthList[this.appendIndex]
       Event.emit("appened", [this.nowTask.data, this.appendIndex])

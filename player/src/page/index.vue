@@ -286,6 +286,7 @@ export default {
         threadNum: this.threadNum,
         timeOut: this.timeOut
       })
+      Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.play()
     },
 
@@ -303,9 +304,8 @@ export default {
         }
       }
       
-      
-      if(Event.globalData.playStatus == Enum.playStatus.LOADING){
-        alert("正在播放中")
+      if(Event.globalData.playStatus == Enum.playStatus.PASEING){
+        alert("正在解析中")
         return
       }
 
@@ -314,7 +314,7 @@ export default {
         return
       }
 
-      Event.emit("status_change", Enum.playStatus.LOADING)
+      Event.emit("status_change", Enum.playStatus.PASEING)
 
       Store.setConfig(this)
       Event.globalData.pinOffset = this.pinOffset

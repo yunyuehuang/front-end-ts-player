@@ -1,8 +1,15 @@
 
 import Event from "./event"
 
-export default {
-  status:0,
+export default class Decoder{
+  constructor(){
+    this.status = 0
+    this.isStop = false
+  }
+
+  stop(){
+    this.isStop = true
+  }
   //eventData 内容为 [buff, index] 
   transferFormat(eventData, cb) {
     // 将源数据从ArrayBuffer格式保存为可操作的Uint8Array格式
@@ -25,6 +32,9 @@ export default {
   
     // 监听data事件，开始转换流
     transmuxer.on('data', (event)=> {
+      if (this.isStop) {
+        return
+      }
       this.status = 1
       //remux选项默认为false，则会回调两次，因此event.type为video，一次type为audio，如果为true，则只会回调一次，type为combined
       if (event.type != outputType) {
@@ -46,8 +56,8 @@ export default {
       }else{
         data = new Uint8Array(event.data)      
       }
+     
       Event.emit("transfered", [data, eventData[1]])
-
       // console.log(muxjs.mp4.tools.inspect(data));
   
     });

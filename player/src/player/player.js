@@ -1,7 +1,7 @@
 
 
 import tsLoader from "./loader.js"
-import decoder from "./decoder.js"
+import Decoder from "./decoder.js"
 import bufferCache from "./bufferCache"
 import sourceBuff from "./sourceBuff"
 import Event from "./event"
@@ -11,21 +11,25 @@ export default class myPlayer{
   constructor() {
     this.htmlEle = null
     this.mediaSource = null
-    this.sourceBuff = null
+   
     this.tsUrls = []
     this.loaderConfig = {
       threadNum: 5,
       timeOut: 10
     }
-    this.bufferCache = new bufferCache()
-    this.tsLoader = new tsLoader()
+
+    this.sourceBuff = null
+    this.bufferCache = null
+    this.decoder = null
+    this.tsLoader = null
+
     this.bindEvent()
   }
 
   bindEvent(){
   
     Event.on("tsloaded",(data)=>{
-      decoder.transferFormat(data)
+      this.decoder.transferFormat(data)
     })
 
     Event.on("transfered",(data)=>{
@@ -37,12 +41,15 @@ export default class myPlayer{
     })
 
     Event.on("appened",(data)=>{
-      let buffItem = this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
-      console.log(this.bufferCache)
+      this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
+
     })
   }
 
   play(){
+    if (this.tsLoader) {
+      this.stop()
+    }
 
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
@@ -50,9 +57,20 @@ export default class myPlayer{
       this.mediaSource.duration = 0
       this.sourceBuff = new sourceBuff()
       this.sourceBuff.initBuffer(this.mediaSource)
+
+      this.bufferCache = new bufferCache()
+      this.decoder = new Decoder()
+      this.tsLoader = new tsLoader()
+
       this.loadTs()
     });
    
+  }
+
+  stop(){
+    this.tsLoader.stop()
+    this.decoder.stop()
+    this.sourceBuff.stop()
   }
 
   setTsUrls(url){

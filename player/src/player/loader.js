@@ -12,6 +12,7 @@ export default class tsLoader{
     this.threadNum = 5
     this.timeOut = 10
     this.urls = []
+    this.isStop = false
   }
   ab2str(buf) {
     return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -28,7 +29,14 @@ export default class tsLoader{
     }
   }
 
+  stop(){
+    this.isStop = true
+  }
+
   beginLoad(){
+    if (this.isStop) {
+      return
+    }
     if (this.urlIndex >= this.urls.length) {
       return
     }
@@ -82,6 +90,9 @@ export default class tsLoader{
       }
       if (xhr.readyState == 4) {
         if (xhr.status == 200) {
+          if (this.isStop) {
+            return
+          }
           Event.emit("tsloaded", [xhr.response, xhr.urlIndex]);
           this.beginLoad()
         } else {
