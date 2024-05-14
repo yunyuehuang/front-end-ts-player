@@ -96,7 +96,8 @@ export default class tsLoader{
           Event.emit("tsloaded", [xhr.response, xhr.urlIndex]);
           this.beginLoad()
         } else {
-          console.log(xhr.status,'请求结束，结果error')
+          console.log(xhr.status,'请求结束，结果error,开始重试')
+          xhr.send();
         }
       }
     }

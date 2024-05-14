@@ -1,5 +1,5 @@
 
-let fields = ['pinOffset', 'url','tsUrl','threadNum','timeOut','pageUrl','playBeginTime']
+let fields = ['pinOffset', 'url','tsUrl','threadNum','timeOut','pageUrl','playBeginTime','section','playEndTime']
 
 export default {
 

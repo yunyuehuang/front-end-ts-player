@@ -1,9 +1,9 @@
 <template>
   <div class="wrap" id="wrap">
-    <div class="title">
+    <!-- <div class="title">
       <div class="t1">阿林播放器</div>
       <div class="t2">看剧更轻松</div>
-    </div>
+    </div> -->
     <div class="search">
       <input v-model="pageUrl" class="input-url">
       <div class="btn" @click="play(1)"><img src="img/ccs.png">网址获取</div>
@@ -33,6 +33,14 @@
         <div class="item-input">
           <span class="text">起始时间(分)</span>
           <input v-model="playBeginTime"> 
+        </div>
+        <div class="item-input">
+          <span class="text">结束时间(分)</span>
+          <input v-model="playEndTime"> 
+        </div>
+        <div class="item-input">
+          <span class="text">section</span>
+          <input v-model="section"> 
         </div>
 
 
@@ -106,7 +114,8 @@ export default {
       threadNum:5,
       timeOut:10,
       playBeginTime:0,
-
+      playEndTime:0,
+      section:0,
       videoSlice:0,
       loadedVideoSlice:{
         num:0,
@@ -166,6 +175,13 @@ export default {
     Event.on("appened",(e)=>{
       this.$set(this.statusBox, e[1], 'append');
       this.updateLoading()
+    })
+
+    Event.on("play_end",(e)=>{
+      if (this.pageUrl != "") {
+        this.section ++
+        this.play(1)
+      }
     })
   },
   methods:{
@@ -227,7 +243,7 @@ export default {
       let urlList = []
       let lengthList = []
       let arr = data.split("\n")
-
+      this.statusBox = []
       for (const i in arr) {
         let e = arr[i]
         if (e.indexOf('METHOD=') > -1) {
@@ -235,10 +251,7 @@ export default {
           Event.emit("status_change", Enum.playStatus.INIT)
           return
         }
-
-
         if (e.indexOf('.ts') > -1) {
-     
           let url
           if (this.tsUrl) {
             url = this.tsUrl.replace('{ts}', e)
@@ -266,7 +279,7 @@ export default {
 
       let time = lengthList[0]
       if (this.playBeginTime > 0) {
-        while(this.playBeginTime*60 > time){
+        while(this.playBeginTime*60 > time){ //设置了起始时间后，需要跳过的片段
           this.statusBox.shift();
           lengthList.shift();
           urlList.shift()
@@ -279,8 +292,14 @@ export default {
           time += lengthList[0]
         }
       }
+      this.player.videoTime = 0
+      lengthList.map((v)=>{
+        this.player.videoTime += v
+      })
+
       Event.globalData.lengthList = lengthList
       this.videoSlice = urlList.length
+      
       this.player.setTsUrls(urlList)
       this.player.setLoaderConfig({
         threadNum: this.threadNum,
@@ -322,12 +341,21 @@ export default {
       if (type == 0) {
         $.get(this.url, this.afterGetM3u8)
       } else if (type == 1){
+
+        let url = this.pageUrl
+        const regex = /\{(\d+)\}/;  
+        let matches = regex.exec(this.pageUrl)
+        if (matches) {
+          let paddingNum = matches[1]
+          let section = this.section.toString().padStart(paddingNum, '0')
+          url = this.pageUrl.replace(regex, section);
+        }
         $.ajax({  
         url: 'http://129.204.63.215:11200/m3u8',  // 请求的 URL  
         type: 'POST',                          // 请求方法，如 GET、POST 等  
         dataType: 'json',                     // 期望的响应数据类型，如 json、xml、html 等  
         data: {                              // 发送到服务器的数据  
-            url: this.pageUrl,  
+            url: url,  
         },
         success: (response) =>{        // 请求成功时的回调函数  
           console.log(response); 

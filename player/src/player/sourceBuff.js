@@ -2,7 +2,7 @@ import Event from "./event"
 export default class sourceBuff{
 
   constructor() {
- 
+    this.mediaSource = null
     this.buffer = null
     this.queue = []
     this.sliceQueue = []
@@ -19,6 +19,7 @@ export default class sourceBuff{
     this.isStop = false
   }
   stop(){
+    this.mediaSource = null
     this.isStop = true
     this.buffer = null
     this.queue = []
@@ -171,7 +172,7 @@ export default class sourceBuff{
       Event.globalData.currentBufferTime += Event.globalData.lengthList[this.appendIndex]
       Event.emit("appened", [this.nowTask.data, this.appendIndex])
       Event.emit("loaded_num", this.appendIndex + 1)
-      console.log("当前视频总长度", Event.globalData.currentBufferTime, this.mediaSource.duration)
+      // console.log("当前视频总长度", Event.globalData.currentBufferTime, this.mediaSource.duration)
 
       this.appendIndex ++
       //检测是否需要进行remove
