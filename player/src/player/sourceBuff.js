@@ -5,11 +5,6 @@ export default class sourceBuff{
     this.mediaSource = null
     this.buffer = null
     this.queue = []
-    this.sliceQueue = []
-    this.bufferIng = {
-      start:0,
-      end:0
-    }
     this.playBufferTime =  {
       start:0,
       end:0
@@ -23,60 +18,10 @@ export default class sourceBuff{
     this.isStop = true
     this.buffer = null
     this.queue = []
-    this.sliceQueue = []
+
   }
 
-  // 元素添加至队列中，队列中的元素按照slice.index（片段的序号）顺序排序
-  addSlice(slice){
-    if (this.sliceQueue.length == 0) {
-      this.sliceQueue.push(slice)
-      return
-    }
-
-    if (slice.index < this.sliceQueue[0].index) {
-      this.sliceQueue.unshift(slice)
-    }
-
-    for (let i=0; i <this.sliceQueue.length; i++) {
-      let nowSlice = this.sliceQueue[i]
-      if (slice.index > nowSlice.index) {
-        if (i == this.sliceQueue.length-1) {
-          this.sliceQueue.push(slice)
-          return
-        }
-
-        let nextSlice = this.sliceQueue[i + 1]
-        if (slice.index < nextSlice.index) {
-          this.sliceQueue.splice(i + 1, 0, slice)
-          return
-        }
-      }
-    }
-  }
-
-  //任务空闲时调用，获取已加载好的队列（sliceQueue）中，是否有下一个片段，如果有，取出来进行append。
-  getSlice(){
-    if (this.sliceQueue.length == 0) {
-      return 
-    }
-
-    let nextSlice = this.sliceQueue[0]
-    if (nextSlice.index > this.appendIndex) {
-      return
-    }
-    this.sliceQueue.shift()
-    Event.emit("appened", [nextSlice.data, this.appendIndex])
-    Event.emit("loaded_num", this.appendIndex + 1)
-    
-    this.appendIndex ++
-    // this.addTask({
-    //   type:"append",
-    //   data: nextSlice.data
-    // })
-    // this.doTask()
-  }
-
-
+ 
   initBuffer(mediaSource){
     this.mediaSource = mediaSource
     // while(this.mediaSource.sourceBuffers.length > 0){
@@ -125,10 +70,8 @@ export default class sourceBuff{
 
     this.nowTask = this.queue.pop()
     try {
-      if(this.nowTask.type == "append"){ //不断超前推进的添加
-        this.appendData()
-      }else if(this.nowTask.type == "remove"){
-        // playBufferTime或者 bufferIng加长时，检测到长度过长，remove掉尾部
+      if(this.nowTask.type == "remove"){
+        // playBufferTime加长时，检测到长度过长，remove掉尾部
         this.removeData()
       }else if(this.nowTask.type == "play_append"){
         //添加播放区内容
@@ -151,12 +94,6 @@ export default class sourceBuff{
     this.buffer.appendBuffer(this.nowTask.buffItem.buff)
   }
 
-
-  appendData(){
-  
-    this.buffer.timestampOffset = Event.globalData.currentBufferTime
-    this.buffer.appendBuffer(this.nowTask.data);
-  }
   removeData(){
     this.buffer.remove(this.nowTask.sTime, this.nowTask.eTime)
   }
@@ -165,38 +102,8 @@ export default class sourceBuff{
     if (this.isStop) {
       return
     }
-    if(this.nowTask.type == "append"){
-      Event.globalData.currentBufferTime += Event.globalData.lengthList[this.appendIndex]
-      Event.emit("appened", [this.nowTask.data, this.appendIndex])
-      Event.emit("loaded_num", this.appendIndex + 1)
-      // console.log("当前视频总长度", Event.globalData.currentBufferTime, this.mediaSource.duration)
 
-      this.appendIndex ++
-      //检测是否需要进行remove
-      this.bufferIng.end = this.mediaSource.duration
-      let removeTime = this.bufferIng.end - this.bufferIng.start
-      if(removeTime > 8){ //如果buffer长度大于8，则移除前n秒,使得buffer区域只剩下2秒
-        removeTime = removeTime - 2
-        let stime = this.bufferIng.start
-
-        this.addTask({
-          type:"remove",
-          sTime: stime ,
-          eTime:this.bufferIng.start + removeTime
-        }, 1) 
-        //将任务push到队列中，保证下一个就会执行，优先执行删除任务，执行完之后才能append本次数据。否则可能导致本次删除还没执行，下一次数据又来到了。
-        this.bufferIng.start += removeTime
-      }
-    }
-    
-    else if(this.nowTask.type == "remove"){
-      // if(this.lastTask && this.lastTask.addRemove){
-      //   Event.emit("appened", this.lastTask.data) //继续append上次被remove打断的数据
-      //   this.lastTask = null
-      // }
-    }
-
-    else if(this.nowTask.type == "play_append"){
+    if(this.nowTask.type == "play_append"){
       let removeTime = this.playBufferTime.end - this.playBufferTime.start
       if(removeTime > 30){
         removeTime = removeTime - 10

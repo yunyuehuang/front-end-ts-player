@@ -2,24 +2,25 @@
 
 import tsLoader from "./loader.js"
 import Decoder from "./decoder.js"
-import bufferCache from "./bufferCache"
 import sourceBuff from "./sourceBuff"
 import Event from "./event"
 import Enum from "./enum"
 export default class myPlayer{
   
   constructor() {
-    this.htmlEle = null
-    this.mediaSource = null
+   
     this.videoTime = 0 //视频总时长，秒
-    this.tsUrls = []
+
     this.loaderConfig = {
       threadNum: 5,
-      timeOut: 10
+      timeOut: 10,
+      preLoadTime:0,
     }
     this.autoPlay = false //自动播放的记录
+
+    this.htmlEle = null
+    this.mediaSource = null
     this.sourceBuff = null
-    this.bufferCache = null
     this.decoder = null
     this.tsLoader = null
 
@@ -35,11 +36,22 @@ export default class myPlayer{
     })
 
     Event.on("transfered",(data)=>{
-      // Event.emit("loaded_num", this.appendIndex + 1)
-
-      Event.globalData.sliceInfo[data[1]].buff = data[0]
-      let slice = Event.globalData.sliceInfo[data[1]]
+      let index = data[1]
+      Event.globalData.sliceInfo[index].buff = data[0]
+      let slice = Event.globalData.sliceInfo[index]
+     
       let ts = this.htmlEle.currentTime
+
+      if (!this.autoPlay && slice.eTime - this.playBeginTime*60 > 30) {
+        try {
+          this.htmlEle.play()
+          this.htmlEle.requestFullscreen()
+          this.autoPlay = true
+        } catch (error) {
+          console.log("autoPlay", error)
+        }
+       
+      }
       if (ts >= slice.sTime && ts < slice.eTime) { //播放点在范围内，证明已经进入阻塞，直接添加
         console.log("进入范围", ts, slice)
         this.sourceBuff.addTask({
@@ -51,16 +63,25 @@ export default class myPlayer{
           reset:1
         })
         this.sourceBuff.doTask()
-      } else if (ts >= slice.sTime-1 && ts < slice.sTime) {
-        this.sourceBuff.addTask({
-          type:"play_append",
-          buffItem:slice,
-          reset:0
-        })
-        this.sourceBuff.doTask()
+
+        if (index == 0) { //第一片段添加完后，移动到启始播放点。第一帧里面有一些元信息，不添加直接加其他的片段，会出错。
+          let beginOffset = 0
+          let sliceInfo = Event.globalData.sliceInfo
+          for (const i in sliceInfo) {
+            if (this.playBeginTime > 0) {
+              if (this.playBeginTime*60 >= sliceInfo[i].sTime && this.playBeginTime*60 <= sliceInfo[i].eTime) {
+                beginOffset = i
+                break
+              }
+            }
+          } 
+          this.tsLoader.urlIndex = beginOffset
+          this.htmlEle.currentTime = this.playBeginTime*60
+        }
+
+      } else if (ts >= slice.sTime-1 && ts < slice.sTime) { //播放到了临近的，可能是之前播放到这里阻塞了，触发一下append
+        this.onVideoPlay()
       }
-
-
     })
   }
 
@@ -78,24 +99,15 @@ export default class myPlayer{
       this.sourceBuff = new sourceBuff()
       this.sourceBuff.initBuffer(this.mediaSource)
 
-      this.bufferCache = new bufferCache()
       this.decoder = new Decoder()
-      this.tsLoader = new tsLoader(this.tsUrls, this.loaderConfig)
-
-      let beginOffset = 0
-      let sliceInfo = Event.globalData.sliceInfo
-      for (const i in sliceInfo) {
-        if (this.playBeginTime > 0) {
-          if (this.playBeginTime*60 >= sliceInfo[i].sTime && this.playBeginTime*60 <= sliceInfo[i].eTime) {
-            beginOffset = i
-            break
-          }
-        }
-      } 
-      this.tsLoader.urlIndex = beginOffset
+      this.tsLoader = new tsLoader()
+      this.tsLoader.threadNum = this.loaderConfig.threadNum
+      this.tsLoader.timeOut = this.loaderConfig.timeOut
+      this.tsLoader.preLoadTime = this.loaderConfig.preLoadTime
+      this.tsLoader.htmlEle = this.htmlEle
       this.tsLoader.loadTsFile()
 
-      this.htmlEle.currentTime = this.playBeginTime*60
+
     });
    
   }
@@ -107,7 +119,6 @@ export default class myPlayer{
       this.sourceBuff.stop()
       this.autoPlay = false
       this.htmlEle.currentTime = 0
-      Event.globalData.currentBufferTime = 0
       this.htmlEle.exitFullscreen()
     } catch (error) {
       console.log("stop error", error)
@@ -115,16 +126,11 @@ export default class myPlayer{
 
   }
 
-  setTsUrls(url){
-    this.tsUrls = url
-  }
-  setLoaderConfig(e){
-    this.loaderConfig = e
-  }
+
   attachHtmlEle(el){
     this.htmlEle = el
     this.htmlEle.addEventListener('timeupdate', this.onVideoPlay.bind(this)) //当目前的播放位置已更改时触发。
-    this.htmlEle.addEventListener('seeked', this.onVideoPlay.bind(this)) //当用户已移动/跳跃到音频/视频中的新位置时触发。
+    this.htmlEle.addEventListener('seeking', this.onVideoPlay.bind(this)) //当用户已移动/跳跃到音频/视频中的新位置时触发。
     this.htmlEle.addEventListener('play', this.onVideoPlay.bind(this)) //当音频/视频已开始或不再暂停时触发。
 
     this.htmlEle.addEventListener('waiting', (e)=>{
@@ -169,8 +175,6 @@ export default class myPlayer{
         type:"play_remove" 
       })
       this.tsLoader.urlIndex = this.getPlayIndex()
-      console.log("重新设置index", this.tsLoader.urlIndex )
-      this.tsLoader.loadTsFile()
     }else{
       //当前播放点在已经buffer的区域内，判断后2秒的内容是否已加载，未加载则加载后2秒的内容 ts=2后的时间点
       //console.log(this.htmlEle.currentTime, this.htmlEle.currentTime + 2, this.sourceBuff.playBufferTime)
@@ -179,6 +183,7 @@ export default class myPlayer{
       }
     }
     if(ts > -1){
+      this.tsLoader.loadTsFile()
       for (let i = 0; i < Event.globalData.sliceInfo.length;i++) {
         let slice = Event.globalData.sliceInfo[i]
         if (ts >= slice.sTime && ts <= slice.eTime && slice.loadStatus == 2) {

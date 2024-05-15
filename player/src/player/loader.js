@@ -7,12 +7,13 @@ let STEP_DOING = 2
 
 export default class tsLoader{
 
-  constructor(urls, config){
+  constructor(){
     this.urlIndex = 0
-    this.threadNum = config.threadNum
-    this.timeOut = config.timeOut
-    this.urls = urls
+    this.threadNum = 0
+    this.timeOut = 0
+    this.preLoadTime = 0
     this.isStop = false
+    this.htmlEle = null
     this.loadingMap = {} //正在请求中的句柄
   }
   ab2str(buf) {
@@ -38,7 +39,7 @@ export default class tsLoader{
     let sliceInfo = Event.globalData.sliceInfo
     let hasData = false //是否有需要加载的数据
     for (let i = this.urlIndex;i<sliceInfo.length;i++){
-      if (sliceInfo[i].loadStatus == 0){
+      if (sliceInfo[i].loadStatus == 0 && (this.preLoadTime > 0 && this.htmlEle.currentTime + this.preLoadTime*60 > sliceInfo[i].sTime)){
         this.urlIndex = i
         hasData = true
         break
@@ -49,10 +50,10 @@ export default class tsLoader{
     }
     let xhr = new XMLHttpRequest();
     xhr.requestStep = STEP_INIT
-    xhr.url = this.urls[this.urlIndex]
+    xhr.url = sliceInfo[this.urlIndex].url
     xhr.urlIndex = this.urlIndex
     this.loadingMap[xhr.urlIndex] = xhr
-    Event.globalData.sliceInfo[xhr.urlIndex].loadStatus = 1
+    sliceInfo[xhr.urlIndex].loadStatus = 1
 
     xhr.onerror = (e)=> {
       console.log(e, "请求错误")

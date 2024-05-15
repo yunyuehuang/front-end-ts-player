@@ -18,7 +18,6 @@ export default {
   playEvent:{
     TSLOADED:'tsloaded',
     TRANSFERED:'transfered',
-    APPENDED:'appened',
     STATUS_CHANGE:'status_change',
   }
   

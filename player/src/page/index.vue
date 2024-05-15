@@ -31,6 +31,10 @@
           <input v-model="pinOffset"> 
         </div>
         <div class="item-input">
+          <span class="text">提前量(分)</span>
+          <input v-model="preLoadTime"> 
+        </div>
+        <div class="item-input">
           <span class="text">起始时间(分)</span>
           <input v-model="playBeginTime"> 
         </div>
@@ -117,6 +121,7 @@ export default {
       playEndTime:0,
       section:0,
       videoSlice:0,
+      preLoadTime:0,
       loadedVideoSlice:{
         num:0,
         cssLeft:"rotate(180deg)",
@@ -154,30 +159,28 @@ export default {
       Event.globalData.playStatus = e
     })
 
-    Event.on("loaded_num", (e)=>{
-
-      if (e >= this.videoSlice) {
-        Event.emit("status_change", Enum.playStatus.COMPLETE)
-        return
-      }
-    })
-
-    Event.on("tsload", (e)=>{
+    Event.on("tsload", (e)=>{ //开始下载片段
       this.$set(this.statusBox, e, 'load');
       this.updateLoading()
     });
 
-    Event.on("tsloaded", (e)=>{
+    Event.on("tsloaded", (e)=>{ //下载片段完成
       this.$set(this.statusBox, e[1], 'loaded');
       this.updateLoading()
     });
 
-    Event.on("appened",(e)=>{
-      this.$set(this.statusBox, e[1], 'append');
-      this.updateLoading()
+    Event.on("transfered",(e)=>{ //片段转换完成
+      try {
+        console.log(e)
+        this.$set(this.statusBox, e[1], 'append')
+        this.updateLoading()
+      } catch (error) {
+        console.log("ss", error)
+      }
+     
     })
 
-    Event.on("play_end",(e)=>{
+    Event.on("play_end",(e)=>{ //播放结束
       if (this.pageUrl != "") {
         this.section ++
         this.play(1)
@@ -195,10 +198,13 @@ export default {
           this.loadingVideoSlice++
         }
         if (e == 'loaded') {
-          this.loadedVideoSlice.num++
+          this.loadedVideoSlice.num ++
+          if (this.loadedVideoSlice.num >= this.videoSlice) {
+            Event.emit("status_change", Enum.playStatus.COMPLETE)
+          }
         }
         if (e == 'append') {
-          this.appendVideoSlice.num++
+          this.appendVideoSlice.num ++
         }
       })
 
@@ -285,18 +291,22 @@ export default {
         }
       }
 
+      for (const i in sliceInfo) {
+        sliceInfo[i].url = urlList[i]
+      }
+
       Event.globalData.sliceInfo = sliceInfo
-      this.videoSlice = urlList.length
+      this.videoSlice = sliceInfo.length
       
-      this.player.setTsUrls(urlList)
-      this.player.setLoaderConfig({
-        threadNum: this.threadNum,
-        timeOut: this.timeOut
-      })
-      Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.videoTime = currentTime
       this.player.playBeginTime = this.playBeginTime
       this.player.playEndTime = this.playEndTime
+      this.player.loaderConfig = {
+        threadNum: this.threadNum,
+        timeOut: this.timeOut,
+        preLoadTime: this.preLoadTime,
+      }
+      Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.play()
     },
 

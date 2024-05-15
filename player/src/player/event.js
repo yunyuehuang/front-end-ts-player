@@ -6,7 +6,6 @@ export default {
     pinOffset: 0.05,  //废弃
     lengthList:[], //视频每个片段时长
     sliceInfo:[], //所有片段信息
-    currentBufferTime:0, //当前最新的总长度
   },
 
   eventObj:{},
