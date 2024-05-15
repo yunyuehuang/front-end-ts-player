@@ -293,7 +293,7 @@ export default {
         }
       }
 
-      let time = lengthList[lengthList.length - 1]
+      time = lengthList[lengthList.length - 1]
       if (this.playEndTime > 0) {
         while(this.playEndTime*60 > time){ //设置了结束时间后，需要跳过的片段
           this.statusBox.pop();
