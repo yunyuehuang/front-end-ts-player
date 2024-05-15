@@ -23,6 +23,9 @@ export default class myPlayer{
     this.decoder = null
     this.tsLoader = null
 
+    this.playBeginTime = 0
+    this.playEndTime = 0
+
     this.bindEvent()
   }
 
@@ -32,24 +35,32 @@ export default class myPlayer{
     })
 
     Event.on("transfered",(data)=>{
-      this.sourceBuff.addSlice({
-        index: data[1],
-        data: data[0]
-      })
-      this.sourceBuff.doTask()
-    })
+      // Event.emit("loaded_num", this.appendIndex + 1)
 
-    Event.on("appened",(data)=>{
-      this.bufferCache.addBuffer(this.mediaSource.duration, data[0])
-      if (!this.autoPlay && Event.globalData.currentBufferTime > 40) {
-        try {
-          this.htmlEle.requestFullscreen()
-          this.htmlEle.play()
-          this.autoPlay = true
-        } catch (error) {
-          console.log("自动播放和全屏错误", error)
-        }
+      Event.globalData.sliceInfo[data[1]].buff = data[0]
+      let slice = Event.globalData.sliceInfo[data[1]]
+      let ts = this.htmlEle.currentTime
+      if (ts >= slice.sTime && ts < slice.eTime) { //播放点在范围内，证明已经进入阻塞，直接添加
+        console.log("进入范围", ts, slice)
+        this.sourceBuff.addTask({
+          type:"play_remove" 
+        })
+        this.sourceBuff.addTask({
+          type:"play_append",
+          buffItem:slice,
+          reset:1
+        })
+        this.sourceBuff.doTask()
+      } else if (ts >= slice.sTime-1 && ts < slice.sTime) {
+        this.sourceBuff.addTask({
+          type:"play_append",
+          buffItem:slice,
+          reset:0
+        })
+        this.sourceBuff.doTask()
       }
+
+
     })
   }
 
@@ -57,20 +68,34 @@ export default class myPlayer{
     if (this.tsLoader) {
       this.stop()
     }
+  
 
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
     this.mediaSource.addEventListener('sourceopen', ()=> {
 
-      this.mediaSource.duration = 0
+      this.mediaSource.duration = this.videoTime
       this.sourceBuff = new sourceBuff()
       this.sourceBuff.initBuffer(this.mediaSource)
 
       this.bufferCache = new bufferCache()
       this.decoder = new Decoder()
-      this.tsLoader = new tsLoader()
+      this.tsLoader = new tsLoader(this.tsUrls, this.loaderConfig)
 
-      this.loadTs()
+      let beginOffset = 0
+      let sliceInfo = Event.globalData.sliceInfo
+      for (const i in sliceInfo) {
+        if (this.playBeginTime > 0) {
+          if (this.playBeginTime*60 >= sliceInfo[i].sTime && this.playBeginTime*60 <= sliceInfo[i].eTime) {
+            beginOffset = i
+            break
+          }
+        }
+      } 
+      this.tsLoader.urlIndex = beginOffset
+      this.tsLoader.loadTsFile()
+
+      this.htmlEle.currentTime = this.playBeginTime*60
     });
    
   }
@@ -120,8 +145,8 @@ export default class myPlayer{
   }
 
   onVideoEnd(){
- 
-    if (this.htmlEle.currentTime > this.videoTime - 3){
+    let end = this.playEndTime > 0 ? this.playEndTime*60 : this.videoTime-3
+    if (this.htmlEle.currentTime > end){
       console.log("结束触发")
       this.stop()
       Event.emit("play_end")
@@ -143,6 +168,9 @@ export default class myPlayer{
       this.sourceBuff.addTask({
         type:"play_remove" 
       })
+      this.tsLoader.urlIndex = this.getPlayIndex()
+      console.log("重新设置index", this.tsLoader.urlIndex )
+      this.tsLoader.loadTsFile()
     }else{
       //当前播放点在已经buffer的区域内，判断后2秒的内容是否已加载，未加载则加载后2秒的内容 ts=2后的时间点
       //console.log(this.htmlEle.currentTime, this.htmlEle.currentTime + 2, this.sourceBuff.playBufferTime)
@@ -151,21 +179,30 @@ export default class myPlayer{
       }
     }
     if(ts > -1){
-      let buffItem = this.bufferCache.getBuffer(ts)
-      if(buffItem){
-        this.sourceBuff.addTask({
-          type:"play_append",
-          buffItem:buffItem,
-          reset:reset
-        })
-        this.sourceBuff.doTask()
+      for (let i = 0; i < Event.globalData.sliceInfo.length;i++) {
+        let slice = Event.globalData.sliceInfo[i]
+        if (ts >= slice.sTime && ts <= slice.eTime && slice.loadStatus == 2) {
+        
+          this.sourceBuff.addTask({
+            type:"play_append",
+            buffItem:slice,
+            reset:reset
+          })
+          this.sourceBuff.doTask()
+          break
+        }
       }
     }
   }
 
-  loadTs(){
-    this.tsLoader.loadTsFile(this.tsUrls, this.loaderConfig)
+  getPlayIndex() {
+    let ts = this.htmlEle.currentTime
+    for (let i = 0; i < Event.globalData.sliceInfo.length;i++) {
+      let slice = Event.globalData.sliceInfo[i]
+      if (ts >= slice.sTime && ts < slice.eTime) {
+        console.log("新的偏移", ts, slice)
+        return i
+      } 
+    }
   }
-
-
 }

@@ -26,7 +26,7 @@ export default class sourceBuff{
     this.sliceQueue = []
   }
 
-  // 元素添加至队列中，队列中的元素按照slice.index顺序排序
+  // 元素添加至队列中，队列中的元素按照slice.index（片段的序号）顺序排序
   addSlice(slice){
     if (this.sliceQueue.length == 0) {
       this.sliceQueue.push(slice)
@@ -54,6 +54,7 @@ export default class sourceBuff{
     }
   }
 
+  //任务空闲时调用，获取已加载好的队列（sliceQueue）中，是否有下一个片段，如果有，取出来进行append。
   getSlice(){
     if (this.sliceQueue.length == 0) {
       return 
@@ -64,11 +65,15 @@ export default class sourceBuff{
       return
     }
     this.sliceQueue.shift()
-    this.addTask({
-      type:"append",
-      data: nextSlice.data
-    })
-    this.doTask()
+    Event.emit("appened", [nextSlice.data, this.appendIndex])
+    Event.emit("loaded_num", this.appendIndex + 1)
+    
+    this.appendIndex ++
+    // this.addTask({
+    //   type:"append",
+    //   data: nextSlice.data
+    // })
+    // this.doTask()
   }
 
 
@@ -115,7 +120,6 @@ export default class sourceBuff{
     }
 
     if(this.queue.length <= 0){
-      this.getSlice()
       return
     }
 
@@ -149,14 +153,7 @@ export default class sourceBuff{
 
 
   appendData(){
-    
-    // if(this.mediaSource.duration > 0){
-    //   //添加buffer偏移量
-    //   // this.buffer.timestampOffset = this.mediaSource.duration - Event.globalData.pinOffset
-    //   this.
-    // } else {
-    //   this.buffer.timestampOffset = 0
-    // }
+  
     this.buffer.timestampOffset = Event.globalData.currentBufferTime
     this.buffer.appendBuffer(this.nowTask.data);
   }

@@ -7,24 +7,22 @@ let STEP_DOING = 2
 
 export default class tsLoader{
 
-  constructor(){
+  constructor(urls, config){
     this.urlIndex = 0
-    this.threadNum = 5
-    this.timeOut = 10
-    this.urls = []
+    this.threadNum = config.threadNum
+    this.timeOut = config.timeOut
+    this.urls = urls
     this.isStop = false
+    this.loadingMap = {} //正在请求中的句柄
   }
   ab2str(buf) {
     return String.fromCharCode.apply(null, new Uint16Array(buf));
   }
 
 
-  loadTsFile(urls, config) {
-    this.threadNum = config.threadNum
-    this.timeOut = config.timeOut
-
-    this.urls = urls
-    for (let i = 0; i < this.threadNum; i++) {
+  loadTsFile() {
+    let num = Object.keys(this.loadingMap).length
+    for (let i = 0; i < this.threadNum - num; i++) {
       this.beginLoad()
     }
   }
@@ -37,14 +35,24 @@ export default class tsLoader{
     if (this.isStop) {
       return
     }
-    if (this.urlIndex >= this.urls.length) {
+    let sliceInfo = Event.globalData.sliceInfo
+    let hasData = false //是否有需要加载的数据
+    for (let i = this.urlIndex;i<sliceInfo.length;i++){
+      if (sliceInfo[i].loadStatus == 0){
+        this.urlIndex = i
+        hasData = true
+        break
+      }
+    }
+    if (!hasData) {
       return
     }
     let xhr = new XMLHttpRequest();
     xhr.requestStep = STEP_INIT
     xhr.url = this.urls[this.urlIndex]
     xhr.urlIndex = this.urlIndex
-    this.urlIndex ++
+    this.loadingMap[xhr.urlIndex] = xhr
+    Event.globalData.sliceInfo[xhr.urlIndex].loadStatus = 1
 
     xhr.onerror = (e)=> {
       console.log(e, "请求错误")
@@ -93,11 +101,14 @@ export default class tsLoader{
           if (this.isStop) {
             return
           }
+          Event.globalData.sliceInfo[xhr.urlIndex].loadStatus = 2
           Event.emit("tsloaded", [xhr.response, xhr.urlIndex]);
-          this.beginLoad()
+
+          delete this.loadingMap[xhr.urlIndex]
+          this.loadTsFile()
         } else {
           console.log(xhr.status,'请求结束，结果error,开始重试')
-          xhr.send();
+          // xhr.send();
         }
       }
     }

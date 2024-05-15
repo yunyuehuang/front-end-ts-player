@@ -241,11 +241,12 @@ export default {
       let myURL = new URL(this.url);
       console.log(myURL)
       let urlList = []
-      let lengthList = []
-      let arr = data.split("\n")
+      let sliceInfo = []
+      let lines = data.split("\n")
       this.statusBox = []
-      for (const i in arr) {
-        let e = arr[i]
+      let currentTime = 0
+      for (const i in lines) {
+        let e = lines[i]
         if (e.indexOf('METHOD=') > -1) {
           alert("暂时无法播放加密视频 " + e)
           Event.emit("status_change", Enum.playStatus.INIT)
@@ -273,48 +274,18 @@ export default {
             Event.emit("status_change", Enum.playStatus.INIT)
             return
           }
-          lengthList.push(Number(match[0]))
+          let time = Number(match[0])
+         
+          sliceInfo.push({
+            sTime:currentTime,
+            eTime:currentTime+time,
+            loadStatus:0
+          })
+          currentTime += time
         }
       }
 
-      let time = lengthList[0]
-      if (this.playBeginTime > 0) {
-        while(this.playBeginTime*60 > time){ //设置了起始时间后，需要跳过的片段
-          this.statusBox.shift();
-          lengthList.shift();
-          urlList.shift()
-          if (lengthList.length == 0) {
-            alert("起始播放时间超过视频总时长")
-            Event.emit("status_change", Enum.playStatus.INIT)
-            return
-          }
-          
-          time += lengthList[0]
-        }
-      }
-
-      time = lengthList[lengthList.length - 1]
-      if (this.playEndTime > 0) {
-        while(this.playEndTime*60 > time){ //设置了结束时间后，需要跳过的片段
-          this.statusBox.pop();
-          lengthList.pop();
-          urlList.pop()
-          if (lengthList.length == 0) {
-            alert("结束播放时间超过视频总时长")
-            Event.emit("status_change", Enum.playStatus.INIT)
-            return
-          }
-          
-          time += lengthList[lengthList.length - 1]
-        }
-      }
-
-      this.player.videoTime = 0
-      lengthList.map((v)=>{
-        this.player.videoTime += v
-      })
-
-      Event.globalData.lengthList = lengthList
+      Event.globalData.sliceInfo = sliceInfo
       this.videoSlice = urlList.length
       
       this.player.setTsUrls(urlList)
@@ -323,6 +294,9 @@ export default {
         timeOut: this.timeOut
       })
       Event.emit("status_change", Enum.playStatus.LOADING)
+      this.player.videoTime = currentTime
+      this.player.playBeginTime = this.playBeginTime
+      this.player.playEndTime = this.playEndTime
       this.player.play()
     },
 
