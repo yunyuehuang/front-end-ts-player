@@ -43,7 +43,7 @@
           <input v-model="playEndTime"> 
         </div>
         <div class="item-input">
-          <span class="text">section</span>
+          <span class="text">集数</span>
           <input v-model="section"> 
         </div>
 
@@ -87,9 +87,6 @@
           <div class="text">已解析</div>
         </div>
       </div>
-
-
-
       <div class="status">
         <div v-for="item in statusBox" :class="item"></div>
       </div>
@@ -148,10 +145,7 @@ export default {
   mounted(){
     Store.getConfig(this)
 
-    let video = this.$refs.video
-   
-    this.player = new Player()
-    this.player.attachHtmlEle(video)
+
 
     Event.on("status_change", (e)=>{
       console.log("status_change", e)
@@ -164,20 +158,14 @@ export default {
       this.updateLoading()
     });
 
-    Event.on("tsloaded", (e)=>{ //下载片段完成
-      this.$set(this.statusBox, e[1], 'loaded');
-      this.updateLoading()
-    });
+    // Event.on("tsloaded", (e)=>{ //下载片段完成
+    //   this.$set(this.statusBox, e[1], 'loaded');
+    //   this.updateLoading()
+    // });
 
     Event.on("transfered",(e)=>{ //片段转换完成
-      try {
-        console.log(e)
-        this.$set(this.statusBox, e[1], 'append')
-        this.updateLoading()
-      } catch (error) {
-        console.log("ss", error)
-      }
-     
+      this.$set(this.statusBox, e[1], 'append')
+      this.updateLoading()
     })
 
     Event.on("play_end",(e)=>{ //播放结束
@@ -186,6 +174,11 @@ export default {
         this.play(1)
       }
     })
+
+    let video = this.$refs.video
+   
+    this.player = new Player()
+    this.player.attachHtmlEle(video)
   },
   methods:{
 

@@ -36,6 +36,7 @@ export default class myPlayer{
     })
 
     Event.on("transfered",(data)=>{
+      
       let index = data[1]
       Event.globalData.sliceInfo[index].buff = data[0]
       let slice = Event.globalData.sliceInfo[index]
@@ -144,10 +145,6 @@ export default class myPlayer{
  
     }) //当目前的播放列表已结束时触发。
 
-    // this.htmlEle.addEventListener('pause', (e)=>{
-    //   console.log("检测到暂停", this.htmlEle.currentTime, this.videoTime)
-    //   this.onVideoEnd()
-    // })
   }
 
   onVideoEnd(){
@@ -156,7 +153,9 @@ export default class myPlayer{
       console.log("结束触发")
       this.stop()
       Event.emit("play_end")
+      return true
     }
+    return false
   }
 
   onVideoPlay(e){
@@ -183,6 +182,9 @@ export default class myPlayer{
       }
     }
     if(ts > -1){
+      if (this.onVideoEnd()) {
+        return
+      }
       this.tsLoader.loadTsFile()
       for (let i = 0; i < Event.globalData.sliceInfo.length;i++) {
         let slice = Event.globalData.sliceInfo[i]
