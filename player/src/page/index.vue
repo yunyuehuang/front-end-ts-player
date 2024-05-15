@@ -292,6 +292,23 @@ export default {
           time += lengthList[0]
         }
       }
+
+      let time = lengthList[lengthList.length - 1]
+      if (this.playEndTime > 0) {
+        while(this.playEndTime*60 > time){ //设置了结束时间后，需要跳过的片段
+          this.statusBox.pop();
+          lengthList.pop();
+          urlList.pop()
+          if (lengthList.length == 0) {
+            alert("结束播放时间超过视频总时长")
+            Event.emit("status_change", Enum.playStatus.INIT)
+            return
+          }
+          
+          time += lengthList[lengthList.length - 1]
+        }
+      }
+
       this.player.videoTime = 0
       lengthList.map((v)=>{
         this.player.videoTime += v

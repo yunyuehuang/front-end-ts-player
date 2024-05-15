@@ -121,7 +121,7 @@ export default class sourceBuff{
 
     this.nowTask = this.queue.pop()
     try {
-      if(this.nowTask.type == "append"){
+      if(this.nowTask.type == "append"){ //不断超前推进的添加
         this.appendData()
       }else if(this.nowTask.type == "remove"){
         // playBufferTime或者 bufferIng加长时，检测到长度过长，remove掉尾部

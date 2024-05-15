@@ -113,15 +113,15 @@ export default class myPlayer{
  
     }) //当目前的播放列表已结束时触发。
 
-    this.htmlEle.addEventListener('pause', (e)=>{
-      console.log("检测到暂停", this.htmlEle.currentTime, this.videoTime)
-      this.onVideoEnd()
-    })
+    // this.htmlEle.addEventListener('pause', (e)=>{
+    //   console.log("检测到暂停", this.htmlEle.currentTime, this.videoTime)
+    //   this.onVideoEnd()
+    // })
   }
 
   onVideoEnd(){
  
-    if (this.htmlEle.currentTime > this.videoTime - 5){
+    if (this.htmlEle.currentTime > this.videoTime - 3){
       console.log("结束触发")
       this.stop()
       Event.emit("play_end")
