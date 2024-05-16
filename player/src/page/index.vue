@@ -26,10 +26,10 @@
           <span class="text">超时时长(秒)</span>
           <input v-model="timeOut"> 
         </div>
-        <div class="item-input">
+        <!-- <div class="item-input">
           <span class="text">拼接偏移</span>
           <input v-model="pinOffset"> 
-        </div>
+        </div> -->
         <div class="item-input">
           <span class="text">提前量(分)</span>
           <input v-model="preLoadTime"> 
@@ -66,7 +66,7 @@
         <div class="mbox all">
           <div class="spinner">
           </div>
-          <div class="num">{{allSizeStr}}</div>
+          <div class="num" v-html="allSizeStr"></div>
           <div class="text">内存</div>
         </div>
         <div class="mbox load">
@@ -76,14 +76,14 @@
           <div class="num">{{loadingVideoSlice}}</div>
           <div class="text">加载中</div>
         </div>
-        <div class="mbox loaded">
+        <!-- <div class="mbox loaded">
           <div class="spinner" :style="{'--loaded-left': loadedVideoSlice.cssLeft, '--loaded-left-color': loadedVideoSlice.cssLeftColor, '--loaded-right': loadedVideoSlice.cssRight}">
             <div class="mask"></div>
             <i class="spinner-progress"></i>
           </div>
           <div class="num" >{{loadedVideoSlice.num}}</div>
           <div class="text">已加载</div>
-        </div>
+        </div> -->
         <div class="mbox append">
           <div class="spinner" :style="{'--append-left': appendVideoSlice.cssLeft, '--append-left-color': appendVideoSlice.cssLeftColor, '--append-right': appendVideoSlice.cssRight}">
             <div class="mask"></div>
@@ -334,6 +334,7 @@ export default {
       this.videoSlice = sliceInfo.length
       
       this.player.videoTime = currentTime
+      this.allSize = 0
     
       Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.play()
