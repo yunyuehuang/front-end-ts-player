@@ -108,11 +108,11 @@ export default {
   name: 'App',
   data(){
     return {
-      pinOffset:0.05,
+      threadNum: 0,
+      pinOffset: 0.05,
       pageUrl:'',
       url:'https://cdn.zoubuting.com/20210703/Klgppf2j/hls/index.m3u8',
       tsUrl:'',
-      threadNum:5,
       timeOut:10,
       playBeginTime:0,
       playEndTime:0,
@@ -137,10 +137,34 @@ export default {
       player:null
     }
   },
+
+  watch:{
+    threadNum: function (val)  {
+      Event.config.threadNum = val
+      Store.setConfig(this)
+    },
+    timeOut: function (val)  {
+      Event.config.timeOut = val
+      Store.setConfig(this)
+    },
+    preLoadTime: function (val,old)  {
+      Event.config.preLoadTime = val
+      Store.setConfig(this)
+    },
+    playBeginTime: function (val)  {
+      Event.config.playBeginTime = val
+      Store.setConfig(this)
+    },
+    playEndTime:function (val)  {
+      Event.config.playEndTime = val
+      Store.setConfig(this)
+    },
+
+  },
   computed: {
     globalStatusStr: function () {
       return Enum.playStatusStr[this.globalStatus]
-    }
+    },
   },
   mounted(){
     Store.getConfig(this)
@@ -292,13 +316,7 @@ export default {
       this.videoSlice = sliceInfo.length
       
       this.player.videoTime = currentTime
-      this.player.playBeginTime = this.playBeginTime
-      this.player.playEndTime = this.playEndTime
-      this.player.loaderConfig = {
-        threadNum: this.threadNum,
-        timeOut: this.timeOut,
-        preLoadTime: this.preLoadTime,
-      }
+    
       Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.play()
     },

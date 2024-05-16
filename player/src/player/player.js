@@ -11,11 +11,6 @@ export default class myPlayer{
    
     this.videoTime = 0 //视频总时长，秒
 
-    this.loaderConfig = {
-      threadNum: 5,
-      timeOut: 10,
-      preLoadTime:0,
-    }
     this.autoPlay = false //自动播放的记录
 
     this.htmlEle = null
@@ -23,9 +18,6 @@ export default class myPlayer{
     this.sourceBuff = null
     this.decoder = null
     this.tsLoader = null
-
-    this.playBeginTime = 0
-    this.playEndTime = 0
 
     this.bindEvent()
   }
@@ -43,7 +35,7 @@ export default class myPlayer{
      
       let ts = this.htmlEle.currentTime
 
-      if (!this.autoPlay && slice.eTime - this.playBeginTime*60 > 30) {
+      if (!this.autoPlay && slice.eTime - Event.config.playBeginTime*60 > 30) {
         try {
           this.htmlEle.play()
           this.htmlEle.requestFullscreen()
@@ -69,15 +61,15 @@ export default class myPlayer{
           let beginOffset = 0
           let sliceInfo = Event.globalData.sliceInfo
           for (const i in sliceInfo) {
-            if (this.playBeginTime > 0) {
-              if (this.playBeginTime*60 >= sliceInfo[i].sTime && this.playBeginTime*60 <= sliceInfo[i].eTime) {
+            if (Event.config.playBeginTime > 0) {
+              if (Event.config.playBeginTime*60 >= sliceInfo[i].sTime && Event.config.playBeginTime*60 <= sliceInfo[i].eTime) {
                 beginOffset = i
                 break
               }
             }
           } 
           this.tsLoader.urlIndex = beginOffset
-          this.htmlEle.currentTime = this.playBeginTime*60
+          this.htmlEle.currentTime = Event.config.playBeginTime*60
         }
 
       } else if (ts >= slice.sTime-1 && ts < slice.sTime) { //播放到了临近的，可能是之前播放到这里阻塞了，触发一下append
@@ -102,9 +94,6 @@ export default class myPlayer{
 
       this.decoder = new Decoder()
       this.tsLoader = new tsLoader()
-      this.tsLoader.threadNum = this.loaderConfig.threadNum
-      this.tsLoader.timeOut = this.loaderConfig.timeOut
-      this.tsLoader.preLoadTime = this.loaderConfig.preLoadTime
       this.tsLoader.htmlEle = this.htmlEle
       this.tsLoader.loadTsFile()
 
@@ -121,6 +110,7 @@ export default class myPlayer{
       this.autoPlay = false
       this.htmlEle.currentTime = 0
       this.htmlEle.exitFullscreen()
+      this.htmlEle.src = ''
     } catch (error) {
       console.log("stop error", error)
     }
@@ -148,7 +138,7 @@ export default class myPlayer{
   }
 
   onVideoEnd(){
-    let end = this.playEndTime > 0 ? this.playEndTime*60 : this.videoTime-3
+    let end = Event.config.playEndTime > 0 ? Event.config.playEndTime*60 : this.videoTime-3
     if (this.htmlEle.currentTime > end){
       console.log("结束触发")
       this.stop()

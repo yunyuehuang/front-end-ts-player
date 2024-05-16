@@ -9,9 +9,6 @@ export default class tsLoader{
 
   constructor(){
     this.urlIndex = 0
-    this.threadNum = 0
-    this.timeOut = 0
-    this.preLoadTime = 0
     this.isStop = false
     this.htmlEle = null
     this.loadingMap = {} //正在请求中的句柄
@@ -23,7 +20,7 @@ export default class tsLoader{
 
   loadTsFile() {
     let num = Object.keys(this.loadingMap).length
-    for (let i = 0; i < this.threadNum - num; i++) {
+    for (let i = 0; i < Event.config.threadNum - num; i++) {
       this.beginLoad()
     }
   }
@@ -39,7 +36,7 @@ export default class tsLoader{
     let sliceInfo = Event.globalData.sliceInfo
     let hasData = false //是否有需要加载的数据
     for (let i = this.urlIndex;i<sliceInfo.length;i++){
-      if (sliceInfo[i].loadStatus == 0 && (this.preLoadTime > 0 && this.htmlEle.currentTime + this.preLoadTime*60 > sliceInfo[i].sTime)){
+      if (sliceInfo[i].loadStatus == 0 && (Event.config.preLoadTime > 0 && this.htmlEle.currentTime + Event.config.preLoadTime*60 > sliceInfo[i].sTime)){
         this.urlIndex = i
         hasData = true
         break
@@ -93,7 +90,7 @@ export default class tsLoader{
       if(xhr.readyState == 3){
         xhr.timer = setTimeout(()=>{
           this.timeOutDeal(xhr)
-        }, this.timeOut * 1000)
+        }, Event.config.timeOut * 1000)
        
         xhr.requestStep = STEP_DOING
       }
