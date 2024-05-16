@@ -3,7 +3,6 @@ import Event from "./event"
 
 export default class Decoder{
   constructor(){
-    this.status = 0
     this.isStop = false
   }
 
@@ -15,7 +14,6 @@ export default class Decoder{
     // 将源数据从ArrayBuffer格式保存为可操作的Uint8Array格式
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
 
-    let isAddHeadInfo = eventData[1] == 0
     var segment = new Uint8Array(eventData[0]);
 
     var remuxedSegments = [];
@@ -27,8 +25,7 @@ export default class Decoder{
       remux: true
     });
 
-    let outputType = "combined"
-  
+
     // 监听data事件，开始转换流
     transmuxer.on('data', (event)=> {
       if (this.isStop) {
@@ -36,36 +33,15 @@ export default class Decoder{
       }
 
       //remux选项默认为false，则会回调两次，因此event.type为video，一次type为audio，如果为true，则只会回调一次，type为combined
-      if (event.type != outputType) {
+      if (event.type != "combined") {
         return
       }
 
-      remuxedSegments.push(event);
-      remuxedBytesLength += event.data.byteLength;
-      remuxedInitSegment = event.initSegment; 
-
-      // let data 
-     
-      // if(isAddHeadInfo){
-      //   try {
-      //     data = new Uint8Array(event.initSegment.byteLength + event.data.byteLength)
-      //   }catch (error) {
-      //     console.log(error,"下载完成")
-      //     Event.emit("status_change", 2)
-      //     return
-      //   }
-      //   data.set(event.initSegment, 0);
-      //   data.set(event.data, event.initSegment.byteLength);
-      //   //buffer.appendBuffer(data);
-      // }else{
-      //   data = new Uint8Array(event.data)      
-      // }
-     
-      // Event.emit("transfered", [data, eventData[1]])
-      // console.log(muxjs.mp4.tools.inspect(data));
+      remuxedSegments.push(event)
+      remuxedBytesLength += event.data.byteLength
+      remuxedInitSegment = event.initSegment
+    })
   
-    });
-    // 监听转换完成事件，拼接最后结果并传入MediaSource
     transmuxer.on('done', (d)=> {
       if (this.isStop) {
         return
@@ -88,7 +64,6 @@ export default class Decoder{
       // vjsParsed = muxjs.mp4.tools.inspect(bytes);
       // console.log('transmuxed', vjsParsed);
   
-      // buffer.appendBuffer(bytes);
     });
     // push方法可能会触发'data'事件，因此要在事件注册完成后调用
     transmuxer.push(segment); // 传入源二进制数据，分割为m2ts包，依次调用上图中的流程

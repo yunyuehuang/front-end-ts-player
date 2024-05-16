@@ -63,6 +63,12 @@
           <div class="num">{{videoSlice}}</div>
           <div class="text">总片段</div>
         </div>
+        <div class="mbox all">
+          <div class="spinner">
+          </div>
+          <div class="num">{{allSizeStr}}</div>
+          <div class="text">内存</div>
+        </div>
         <div class="mbox load">
           <div class="spinner">
           
@@ -134,6 +140,7 @@ export default {
       loadingVideoSlice: 0, //加载中
       globalStatus:Enum.playStatus.INIT,
       statusBox: [],
+      allSize:0, //内存暂用大小
       player:null
     }
   },
@@ -165,11 +172,21 @@ export default {
     globalStatusStr: function () {
       return Enum.playStatusStr[this.globalStatus]
     },
+    allSizeStr: function(){
+      let bytes = this.allSize
+      if (bytes === 0) return '0B';  
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];  
+      let u = 0;  
+      while (bytes >= 1024 && u < units.length - 1) {  
+        bytes /= 1024;  
+        ++u;  
+      }
+      return `${bytes.toFixed(2)}${units[u]}`; 
+    }
+    
   },
   mounted(){
     Store.getConfig(this)
-
-
 
     Event.on("status_change", (e)=>{
       console.log("status_change", e)
@@ -180,14 +197,15 @@ export default {
     Event.on("tsload", (e)=>{ //开始下载片段
       this.$set(this.statusBox, e, 'load');
       this.updateLoading()
-    });
+    })
 
     // Event.on("tsloaded", (e)=>{ //下载片段完成
     //   this.$set(this.statusBox, e[1], 'loaded');
     //   this.updateLoading()
-    // });
+    // })
 
     Event.on("transfered",(e)=>{ //片段转换完成
+      this.allSize += e[0].byteLength 
       this.$set(this.statusBox, e[1], 'append')
       this.updateLoading()
     })
