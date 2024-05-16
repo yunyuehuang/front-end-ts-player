@@ -90,6 +90,11 @@ export default class sourceBuff{
   }
 
   playAppend(){
+    if(this.nowTask.reset){
+      this.playBufferTime.start = this.nowTask.buffItem.sTime
+    }
+    this.playBufferTime.end = this.nowTask.buffItem.eTime
+    
     this.buffer.timestampOffset = this.nowTask.buffItem.sTime
     this.buffer.appendBuffer(this.nowTask.buffItem.buff)
   }
@@ -115,10 +120,7 @@ export default class sourceBuff{
         }, 1)
         this.playBufferTime.start += removeTime
       }
-      if(this.nowTask.reset){
-        this.playBufferTime.start = this.nowTask.buffItem.sTime
-      }
-      this.playBufferTime.end = this.nowTask.buffItem.eTime
+     
     }
 
     this.nowTask = null

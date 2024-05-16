@@ -30,12 +30,11 @@ export default class myPlayer{
     Event.on("transfered",(data)=>{
       
       let index = data[1]
-      Event.globalData.sliceInfo[index].buff = data[0]
       let slice = Event.globalData.sliceInfo[index]
-     
-      let ts = this.htmlEle.currentTime
+      slice.buff = data[0]
 
-      if (!this.autoPlay && slice.eTime - Event.config.playBeginTime*60 > 30) {
+      let ts = this.htmlEle.currentTime
+      if (!this.autoPlay && slice.eTime - Event.config.playBeginTime*60 > 30) { //加载到一定长度，自动播放
         try {
           this.htmlEle.play()
           this.htmlEle.requestFullscreen()
@@ -43,35 +42,10 @@ export default class myPlayer{
         } catch (error) {
           console.log("autoPlay", error)
         }
-       
       }
+
       if (ts >= slice.sTime && ts < slice.eTime) { //播放点在范围内，证明已经进入阻塞，直接添加
-        console.log("进入范围", ts, slice)
-        this.sourceBuff.addTask({
-          type:"play_remove" 
-        })
-        this.sourceBuff.addTask({
-          type:"play_append",
-          buffItem:slice,
-          reset:1
-        })
-        this.sourceBuff.doTask()
-
-        if (index == 0) { //第一片段添加完后，移动到启始播放点。第一帧里面有一些元信息，不添加直接加其他的片段，会出错。
-          let beginOffset = 0
-          let sliceInfo = Event.globalData.sliceInfo
-          for (const i in sliceInfo) {
-            if (Event.config.playBeginTime > 0) {
-              if (Event.config.playBeginTime*60 >= sliceInfo[i].sTime && Event.config.playBeginTime*60 <= sliceInfo[i].eTime) {
-                beginOffset = i
-                break
-              }
-            }
-          } 
-          this.tsLoader.urlIndex = beginOffset
-          this.htmlEle.currentTime = Event.config.playBeginTime*60
-        }
-
+        this.onVideoPlay()
       } else if (ts >= slice.sTime-1 && ts < slice.sTime) { //播放到了临近的，可能是之前播放到这里阻塞了，触发一下append
         this.onVideoPlay()
       }
@@ -83,7 +57,6 @@ export default class myPlayer{
       this.stop()
     }
   
-
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)
     this.mediaSource.addEventListener('sourceopen', ()=> {
@@ -95,9 +68,20 @@ export default class myPlayer{
       this.decoder = new Decoder()
       this.tsLoader = new tsLoader()
       this.tsLoader.htmlEle = this.htmlEle
+
+      if (Event.config.playBeginTime > 0) {
+        let beginOffset = 0
+        let sliceInfo = Event.globalData.sliceInfo
+        for (const i in sliceInfo) {
+          if (Event.config.playBeginTime*60 >= sliceInfo[i].sTime && Event.config.playBeginTime*60 < sliceInfo[i].eTime) {
+            beginOffset = i
+            break
+          }
+        }
+        this.tsLoader.urlIndex = beginOffset
+        this.htmlEle.currentTime = Event.config.playBeginTime*60
+      } 
       this.tsLoader.loadTsFile()
-
-
     });
    
   }
@@ -114,7 +98,6 @@ export default class myPlayer{
     } catch (error) {
       console.log("stop error", error)
     }
-
   }
 
 
@@ -150,7 +133,7 @@ export default class myPlayer{
 
   onVideoPlay(e){
     
-    if(this.sourceBuff.nowTask && (this.sourceBuff.nowTask.type == "play_append" || this.sourceBuff.nowTask.type == "play_remove")){
+    if(this.sourceBuff.nowTask){
       return
     }
    
