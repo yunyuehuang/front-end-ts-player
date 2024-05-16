@@ -76,7 +76,7 @@ export default class tsLoader{
 
     xhr.timer = setTimeout(() => {
       this.timeOutDeal(xhr)
-    }, this.timeOut * 1000)
+    }, Event.config.timeOut * 1000)
 
   }
 
@@ -132,7 +132,7 @@ export default class tsLoader{
       xhr.send();
       xhr.timer = setTimeout(()=>{
         this.timeOutDeal(xhr)
-      }, this.timeOut * 1000)
+      }, Event.config.timeOut * 1000)
     }, 1000)
   }
 
