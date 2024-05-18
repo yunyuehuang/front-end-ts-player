@@ -12,13 +12,14 @@
   "dependencies": {
     "element-ui": "^2.15.14",
     "jquery": "3.5.1",
-    "less-loader": "^5.0.0",
     "vue": "2.6.12"
   },
   "devDependencies": {
+    "babel-plugin-component": "^1.1.1",
     "css-loader": "4.3.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "4.4.1",
+    "less-loader": "^5.0.0",
     "sass-loader": "10.0.2",
     "style-loader": "1.2.1",
     "vue-loader": "15.9.6",
