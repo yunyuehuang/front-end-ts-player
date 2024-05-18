@@ -2,7 +2,8 @@ const puppeteer = require('puppeteer');
 let logs = require ("./log.js")
 let browser
 puppeteer.launch({
-  args: ['--no-sandbox']
+  args: ['--no-sandbox'],
+  headless: false
 }).then(data=>{
   browser=data
 })
@@ -15,6 +16,7 @@ exports.getM3u8 = async function(url){
   // 订阅 reponse 事件，参数是一个 reponse 实体
   page.on('response', async (response) => {
     try {
+      console.log('请求', response.url())
       if (pattern.test(response.url())) {
         logs.log("解析", response.url())
         let data = await response.text()

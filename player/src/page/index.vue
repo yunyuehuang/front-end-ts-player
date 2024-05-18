@@ -108,7 +108,8 @@
 import Event from "../player/event.js"
 import Enum from "../player/enum.js"
 import Player from "@src/player/player.js"
-import $ from "jquery"
+import Req from "@src/player/request.js"
+
 import Store from "../player/store"
 export default {
   name: 'App',
@@ -278,21 +279,27 @@ export default {
       return res
     },
 
-    afterGetM3u8(data){
+    async afterGetM3u8(data){
+      Event.globalData.ase = null
+      let lines = data.split("\n")
+      for (const i in lines) {
+        let e = lines[i]
+        if (e.indexOf('METHOD=') > -1) {
+          let keyMap = Req.getKeyMap(e)
+          keyMap.key = await Req.get(this.url.replace(/(\/[^\/]*)$/, '') +"/"+ keyMap.URI)
+          Event.globalData.ase = keyMap
+          break
+        }
+      }
+
       let myURL = new URL(this.url);
       console.log(myURL)
       let urlList = []
       let sliceInfo = []
-      let lines = data.split("\n")
       this.statusBox = []
       let currentTime = 0
       for (const i in lines) {
         let e = lines[i]
-        if (e.indexOf('METHOD=') > -1) {
-          alert("暂时无法播放加密视频 " + e)
-          Event.emit("status_change", Enum.playStatus.INIT)
-          return
-        }
         if (e.indexOf('.ts') > -1) {
           let url
           if (this.tsUrl) {
@@ -335,12 +342,12 @@ export default {
       
       this.player.videoTime = currentTime
       this.allSize = 0
-    
+    debugger
       Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.play()
     },
 
-    play(type){
+    async play(type){
 
       if (type == 1) {
         if(!this.pageUrl){
@@ -370,7 +377,8 @@ export default {
       Event.globalData.pinOffset = this.pinOffset
 
       if (type == 0) {
-        $.get(this.url, this.afterGetM3u8)
+        let data = await Req.get(this.url)
+        this.afterGetM3u8(data)
       } else if (type == 1){
 
         let url = this.pageUrl
@@ -381,29 +389,18 @@ export default {
           let section = this.section.toString().padStart(paddingNum, '0')
           url = this.pageUrl.replace(regex, section);
         }
-        $.ajax({  
-        url: 'http://129.204.63.215:11200/m3u8',  // 请求的 URL  
-        type: 'POST',                          // 请求方法，如 GET、POST 等  
-        dataType: 'json',                     // 期望的响应数据类型，如 json、xml、html 等  
-        data: {                              // 发送到服务器的数据  
-            url: url,  
-        },
-        success: (response) =>{        // 请求成功时的回调函数  
-          console.log(response); 
-          if (response.code !=0) {
-            Event.emit("status_change", Enum.playStatus.INIT)
-            alert("请求失败" + response.data)
-            return
-          }
-          this.url = response.data.url
-          this.afterGetM3u8(response.data.data)
-        },  
-        error: function(jqXHR, textStatus, errorThrown) { // 请求失败时的回调函数  
-          alert("请求失败")
+
+        let data
+        try {
+          data = await Req.requestUrl(url)
+        } catch (error) {
           Event.emit("status_change", Enum.playStatus.INIT)
-        },  
-      })
-    }
+          alert(error)
+          return
+        }
+        this.url = data.url
+        this.afterGetM3u8(data.data)
+      }
     }
   }
 }

@@ -4,7 +4,11 @@ import tsLoader from "./loader.js"
 import Decoder from "./decoder.js"
 import sourceBuff from "./sourceBuff"
 import Event from "./event"
+import Decrypter from "./crypt/decrypter"
+import {hexadecimalInteger} from "./crypt/mp4-tools.js"
 import Enum from "./enum"
+
+
 export default class myPlayer{
   
   constructor() {
@@ -24,7 +28,18 @@ export default class myPlayer{
 
   bindEvent(){
     Event.on("tsloaded",(data)=>{
-      this.decoder.transferFormat(data)
+      if (Event.globalData.ase) {
+        const encoder = new TextEncoder()
+        let gm = new Decrypter()
+        gm.decrypt(data[0], encoder.encode(Event.globalData.ase.key).buffer, hexadecimalInteger(Event.globalData.ase.IV).buffer,0)
+        .then((e) => {
+          data[0] = e
+          this.decoder.transferFormat(data)
+        })
+      } else {
+        this.decoder.transferFormat(data)
+      }
+      
     })
 
     Event.on("transfered",(data)=>{
@@ -81,6 +96,8 @@ export default class myPlayer{
         this.tsLoader.urlIndex = beginOffset
         this.htmlEle.currentTime = Event.config.playBeginTime*60
       } 
+
+      console.log("envData", Event)
       this.tsLoader.loadTsFile()
     });
    
