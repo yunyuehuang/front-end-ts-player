@@ -1,53 +1,66 @@
 <template>
   <div class="wrap" id="wrap">
-    <!-- <div class="title">
+    <div class="title">
       <div class="t1">阿林播放器</div>
       <div class="t2">看剧更轻松</div>
-    </div> -->
-    <div class="search">
-      <input v-model="pageUrl" class="input-url">
-      <div class="btn" @click="play(1)"><img src="img/ccs.png">网址获取</div>
     </div>
     <div class="search">
-      <input v-model="url" placeholder="xxx.m3u8" class="input-url">
+      <input v-model="config.pageUrl" class="input-url">
+      <div class="btn" @click="play(1)">
+        <el-popover
+          placement="top-start"
+          title="网址说明"
+          width="500"
+          trigger="hover"
+          content="http://xxx-{2}.html 会自动将{2}替换为具体的集数。{2}中的2表示数字最少有2位数位，当填写集数1时，会补0，变为01，使其达到两位数，最终结果是http://xxx-01.html">
+          <i slot="reference" class="el-icon-question"></i>
+    
+        </el-popover>
+        &nbsp;网址获取</div>
+    
+    </div>
+
+    <div class="search">
+      <input v-model="config.url" placeholder="xxx.m3u8" class="input-url">
       <div class="btn" @click="play(0)"><img src="img/ccs.png">m3u8获取</div>
     </div>  
-    <!-- <div class="operate">
-      ts文件正则<input v-model="tsUrl" class="input-url" placeholder="https://xxxxx/xx/{ts}">
-      <p class="desc">会将填写内容的{ts}替换为m3u8文件中的ts文件地址</p>
-    </div> -->
+
     <div class="operate">
       <div class="setting">
         <div class="item-input">
-          <span class="text">并发数</span>
-          <input v-model="threadNum"> 
+          <span class="text">集数</span>
+          <input v-model="config.section"> 
         </div>
         <div class="item-input">
+          <span class="text">自动连播</span>
+          <div class="obj"> <el-switch v-model="config.autoPlayNext"></el-switch></div>
+         
+        </div>
+        <div class="item-input">
+          <span class="text">起始时间(分)</span>
+          <input v-model="config.playBeginTime"> 
+        </div>
+        <div class="item-input">
+          <span class="text">结束时间(分)</span>
+          <input v-model="config.playEndTime"> 
+        </div>
+        <div class="item-input">
+          <span class="text">提前量(分)</span>
+          <input v-model="config.preLoadTime"> 
+        </div>
+
+        <div class="item-input">
           <span class="text">超时时长(秒)</span>
-          <input v-model="timeOut"> 
+          <input v-model="config.timeOut"> 
+        </div>
+        <div class="item-input">
+          <span class="text">并发数</span>
+          <input v-model="config.threadNum"> 
         </div>
         <!-- <div class="item-input">
           <span class="text">拼接偏移</span>
           <input v-model="pinOffset"> 
         </div> -->
-        <div class="item-input">
-          <span class="text">提前量(分)</span>
-          <input v-model="preLoadTime"> 
-        </div>
-        <div class="item-input">
-          <span class="text">起始时间(分)</span>
-          <input v-model="playBeginTime"> 
-        </div>
-        <div class="item-input">
-          <span class="text">结束时间(分)</span>
-          <input v-model="playEndTime"> 
-        </div>
-        <div class="item-input">
-          <span class="text">集数</span>
-          <input v-model="section"> 
-        </div>
-
-
       </div>
       <div class="mbox-wrap">
         <div class="mbox">
@@ -115,17 +128,8 @@ export default {
   name: 'App',
   data(){
     return {
-      threadNum: 0,
-      pinOffset: 0.05,
-      pageUrl:'',
-      url:'https://cdn.zoubuting.com/20210703/Klgppf2j/hls/index.m3u8',
-      tsUrl:'',
-      timeOut:10,
-      playBeginTime:0,
-      playEndTime:0,
-      section:0,
+      config:Event.config,
       videoSlice:0,
-      preLoadTime:0,
       loadedVideoSlice:{
         num:0,
         cssLeft:"rotate(180deg)",
@@ -141,33 +145,18 @@ export default {
       loadingVideoSlice: 0, //加载中
       globalStatus:Enum.playStatus.INIT,
       statusBox: [],
-      allSize:0, //内存暂用大小
+      allSize:0, //内存占用大小
       player:null
     }
   },
 
   watch:{
-    threadNum: function (val)  {
-      Event.config.threadNum = val
-      Store.setConfig(this)
+    config:{ 
+      handler: function (newValue, oldValue) {
+        Store.setConfig(this.config)
+      },
+      deep: true 
     },
-    timeOut: function (val)  {
-      Event.config.timeOut = val
-      Store.setConfig(this)
-    },
-    preLoadTime: function (val,old)  {
-      Event.config.preLoadTime = val
-      Store.setConfig(this)
-    },
-    playBeginTime: function (val)  {
-      Event.config.playBeginTime = val
-      Store.setConfig(this)
-    },
-    playEndTime:function (val)  {
-      Event.config.playEndTime = val
-      Store.setConfig(this)
-    },
-
   },
   computed: {
     globalStatusStr: function () {
@@ -187,7 +176,7 @@ export default {
     
   },
   mounted(){
-    Store.getConfig(this)
+    Store.getConfig(this.config)
 
     Event.on("status_change", (e)=>{
       console.log("status_change", e)
@@ -212,8 +201,8 @@ export default {
     })
 
     Event.on("play_end",(e)=>{ //播放结束
-      if (this.pageUrl != "") {
-        this.section ++
+      if (this.config.pageUrl != "") {
+        this.config.section ++
         this.play(1)
       }
     })
@@ -286,30 +275,27 @@ export default {
         let e = lines[i]
         if (e.indexOf('METHOD=') > -1) {
           let keyMap = Req.getKeyMap(e)
-          keyMap.key = await Req.get(this.url.replace(/(\/[^\/]*)$/, '') +"/"+ keyMap.URI)
+          keyMap.key = await Req.get(this.config.url.replace(/(\/[^\/]*)$/, '') +"/"+ keyMap.URI)
           Event.globalData.ase = keyMap
           break
         }
       }
 
-      let myURL = new URL(this.url);
+      let myURL = new URL(this.config.url);
       console.log(myURL)
       let urlList = []
       let sliceInfo = []
       this.statusBox = []
       let currentTime = 0
       for (const i in lines) {
+        console.log("cc")
         let e = lines[i]
         if (e.indexOf('.ts') > -1) {
           let url
-          if (this.tsUrl) {
-            url = this.tsUrl.replace('{ts}', e)
+          if (e.indexOf('http') > -1) {
+            url = e
           } else {
-            if (e.indexOf('http') > -1) {
-              url = e
-            } else {
-              url = `${myURL.origin}/${e}`
-            }
+            url = `${myURL.origin}/${e}`
           }
           urlList.push(url)
           this.statusBox.push('init')
@@ -350,12 +336,12 @@ export default {
     async play(type){
 
       if (type == 1) {
-        if(!this.pageUrl){
+        if(!this.config.pageUrl){
           alert("请先输入网页地址")
           return
         }
       } else {
-        if(!this.url){
+        if(!this.config.url){
           alert("请先输入m3u8地址")
           return
         }
@@ -373,21 +359,21 @@ export default {
 
       Event.emit("status_change", Enum.playStatus.PASEING)
 
-      Store.setConfig(this)
+      Store.setConfig(this.config)
       Event.globalData.pinOffset = this.pinOffset
 
       if (type == 0) {
-        let data = await Req.get(this.url)
+        let data = await Req.get(this.config.url)
         this.afterGetM3u8(data)
       } else if (type == 1){
 
-        let url = this.pageUrl
+        let url = this.config.pageUrl
         const regex = /\{(\d+)\}/;  
-        let matches = regex.exec(this.pageUrl)
+        let matches = regex.exec(this.config.pageUrl)
         if (matches) {
           let paddingNum = matches[1]
-          let section = this.section.toString().padStart(paddingNum, '0')
-          url = this.pageUrl.replace(regex, section);
+          let section = this.config.section.toString().padStart(paddingNum, '0')
+          url = this.config.pageUrl.replace(regex, section);
         }
 
         let data
@@ -398,7 +384,7 @@ export default {
           alert(error)
           return
         }
-        this.url = data.url
+        this.config.url = data.url
         this.afterGetM3u8(data.data)
       }
     }

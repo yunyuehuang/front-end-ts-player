@@ -2,11 +2,14 @@
 export default {
   config: {
     pinOffset: 0.05,  //废弃
-    threadNum: 0,
-    timeOut:0,
-    preLoadTime:0,
+    threadNum: 5,
+    timeOut:20,
+    preLoadTime:20,
     playBeginTime:0,
     playEndTime:0,
+    autoPlayNext:false,
+    pageUrl:'',
+    url:'https://cdn.zoubuting.com/20210703/Klgppf2j/hls/index.m3u8',
   },
   globalData:{
     playStatus: 0, //0未开始 1下载中 2已完成 3切换中

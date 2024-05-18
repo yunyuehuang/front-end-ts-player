@@ -50,7 +50,7 @@ export default class tsLoader{
     xhr.url = sliceInfo[this.urlIndex].url
     xhr.urlIndex = this.urlIndex
     this.loadingMap[xhr.urlIndex] = xhr
-    sliceInfo[xhr.urlIndex].loadStatus = 1
+    sliceInfo[xhr.urlIndex].loadStatus = 1  //0初始化 1下载中  2已下载  3下载出错
 
     xhr.onerror = (e)=> {
       console.log(e, "请求错误")
@@ -104,8 +104,12 @@ export default class tsLoader{
 
           delete this.loadingMap[xhr.urlIndex]
           this.loadTsFile()
-        } else {
-          console.log(xhr.status,'请求结束，结果error,开始重试')
+        } else if (xhr.status == 0) {} else {
+          Event.emit("tsload_err", xhr.urlIndex)
+          Event.globalData.sliceInfo[xhr.urlIndex].loadStatus = 3
+          delete this.loadingMap[xhr.urlIndex]
+          this.loadTsFile()
+          console.log(xhr.status,'请求结束，结果error')
           // xhr.send();
         }
       }

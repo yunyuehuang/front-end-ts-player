@@ -138,6 +138,9 @@ export default class myPlayer{
   }
 
   onVideoEnd(){
+    if (!Event.config.autoPlayNext){
+      return
+    }
     let end = Event.config.playEndTime > 0 ? Event.config.playEndTime*60 : this.videoTime-3
     if (this.htmlEle.currentTime > end){
       console.log("结束触发")
