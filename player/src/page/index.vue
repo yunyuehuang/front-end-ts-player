@@ -288,7 +288,6 @@ export default {
       this.statusBox = []
       let currentTime = 0
       for (const i in lines) {
-        console.log("cc")
         let e = lines[i]
         if (e.indexOf('.ts') > -1) {
           let url

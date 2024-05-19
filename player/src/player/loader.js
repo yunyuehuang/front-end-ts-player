@@ -95,14 +95,6 @@ export default class tsLoader{
         xhr.requestStep = STEP_DOING
       }
       if (xhr.readyState == 4) {
-
-        if (xhr.urlIndex == 3) {
-          Event.emit("tsload_err", xhr.urlIndex)
-          Event.globalData.sliceInfo[xhr.urlIndex].loadStatus = 3
-          delete this.loadingMap[xhr.urlIndex]
-          this.loadTsFile()
-          return
-        }
         if (xhr.status == 200) {
           if (this.isStop) {
             return
