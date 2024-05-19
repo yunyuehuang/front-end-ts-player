@@ -7,6 +7,7 @@ import Event from "./event"
 import Decrypter from "./crypt/decrypter"
 import {hexadecimalInteger} from "./crypt/mp4-tools.js"
 import Enum from "./enum"
+import { get } from "jquery"
 
 
 export default class myPlayer{
@@ -126,7 +127,32 @@ export default class myPlayer{
 
     this.htmlEle.addEventListener('waiting', (e)=>{
       console.log('waiting', e)
-      this.onVideoEnd()
+      if (this.onVideoEnd()) {
+        return
+      }
+      
+      let index = this.getPlayIndex()
+      console.log(this.htmlEle.currentTime, Event.globalData.sliceInfo[index], Event.globalData.sliceInfo[index+1])
+
+      let nextIndex = index+1 
+      let errIndex = 0
+      while(true) {
+        if (nextIndex > Event.globalData.sliceInfo.length) {
+          break
+        }
+        if (Event.globalData.sliceInfo[nextIndex].loadStatus == 3) { //下一个片段是错误片段
+          errIndex = nextIndex
+          nextIndex ++
+        } else {
+          break
+        }
+      }
+
+      if (errIndex > 0 && errIndex< Event.globalData.sliceInfo.length) {
+        this.htmlEle.currentTime = Event.globalData.sliceInfo[errIndex+1].sTime
+        console.log("自动跳过错误片段", this.htmlEle.currentTime, Event.globalData.sliceInfo[errIndex+1])
+      }
+    
     }) 
 
 
@@ -200,7 +226,6 @@ export default class myPlayer{
     for (let i = 0; i < Event.globalData.sliceInfo.length;i++) {
       let slice = Event.globalData.sliceInfo[i]
       if (ts >= slice.sTime && ts < slice.eTime) {
-        console.log("新的偏移", ts, slice)
         return i
       } 
     }

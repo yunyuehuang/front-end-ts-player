@@ -7,7 +7,7 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
-  devtool: "eval-source-map",
+  // devtool: "eval-source-map",
   plugins: [
     new HtmlWebpackPlugin({
       title: '阿林播放器',
@@ -44,6 +44,24 @@ module.exports = {
       {
         test: /\.(eot|svg|ttf|woff|woff2)(\?\S*)?$/,
         loader: 'file-loader'
+      },
+      {
+        test: /\.js$/,
+        use: {
+          loader:'babel-loader',
+          options:{
+            // "presets": [["es2015", { "modules": false }]],
+            "plugins": [
+              [
+                "component",
+                {
+                  "libraryName": "element-ui",
+                  "styleLibraryName": "theme-chalk"
+                }
+              ]
+            ]
+          }
+        }
       }
     ]
   },

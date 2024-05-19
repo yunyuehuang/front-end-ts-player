@@ -10,6 +10,7 @@
     "build": "set NODE_OPTIONS=--openssl-legacy-provider && webpack"
   },
   "dependencies": {
+    "babel-loader": "^8.2.5",
     "element-ui": "^2.15.14",
     "jquery": "3.5.1",
     "vue": "2.6.12"

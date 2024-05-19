@@ -189,10 +189,10 @@ export default {
       this.updateLoading()
     })
 
-    // Event.on("tsloaded", (e)=>{ //下载片段完成
-    //   this.$set(this.statusBox, e[1], 'loaded');
-    //   this.updateLoading()
-    // })
+    Event.on("tsload_err", (e)=>{ //下载片段完成
+      this.$set(this.statusBox, e, 'error');
+      this.updateLoading()
+    })
 
     Event.on("transfered",(e)=>{ //片段转换完成
       this.allSize += e[0].byteLength 

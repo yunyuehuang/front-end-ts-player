@@ -95,6 +95,14 @@ export default class tsLoader{
         xhr.requestStep = STEP_DOING
       }
       if (xhr.readyState == 4) {
+
+        if (xhr.urlIndex == 3) {
+          Event.emit("tsload_err", xhr.urlIndex)
+          Event.globalData.sliceInfo[xhr.urlIndex].loadStatus = 3
+          delete this.loadingMap[xhr.urlIndex]
+          this.loadTsFile()
+          return
+        }
         if (xhr.status == 200) {
           if (this.isStop) {
             return
@@ -105,11 +113,13 @@ export default class tsLoader{
           delete this.loadingMap[xhr.urlIndex]
           this.loadTsFile()
         } else if (xhr.status == 0) {} else {
-          Event.emit("tsload_err", xhr.urlIndex)
+          console.log(xhr.status,'请求结束，结果error')
           Event.globalData.sliceInfo[xhr.urlIndex].loadStatus = 3
           delete this.loadingMap[xhr.urlIndex]
+          Event.emit("tsload_err", xhr.urlIndex)
+        
           this.loadTsFile()
-          console.log(xhr.status,'请求结束，结果error')
+
           // xhr.send();
         }
       }
