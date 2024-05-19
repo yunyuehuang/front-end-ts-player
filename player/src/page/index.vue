@@ -106,12 +106,13 @@
           <div class="text">已解析</div>
         </div>
       </div>
-      <div class="status">
-        <div v-for="item in statusBox" :class="item"></div>
-      </div>
+    
     </div>
     <div id="video-wrapper">
       <video controls ref="video"></video>
+      <div class="status">
+        <div v-for="item in statusBox" :class="item"></div>
+      </div>
     </div>
 
   </div>
@@ -144,7 +145,7 @@ export default {
       }, //已解析
       loadingVideoSlice: 0, //加载中
       globalStatus:Enum.playStatus.INIT,
-      statusBox: [],
+      statusBox: ['init'],
       allSize:0, //内存占用大小
       player:null
     }
