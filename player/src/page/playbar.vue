@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="status"   @mousemove="updateTooltipPosition"  
-      @mouseleave="hideTooltip"  >
+      @mouseleave="hideTooltip" @click="clickBar" >
       <div v-for="item in loadingBox" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
       <div v-for="item in appendBox" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
       <div v-for="item in errorBox" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
@@ -19,7 +19,7 @@
 <script>
 import Event from "../player/event.js"
 import Enum from "../player/enum.js"
-
+import Tool from "../player/tool.js"
 
 export default {
   name:"playbar",
@@ -40,18 +40,28 @@ export default {
       this.isTooltipVisible = true;  
       // 获取触发元素的边界和窗口的滚动位置  
       const rect = event.target.getBoundingClientRect();  
-      const x = event.clientX - rect.left;  
-      const y = rect.top + 5;  
+      const x = event.clientX;  
+      const y = rect.top;  
   
       // 这里你可能需要调整位置，以确保 tooltip 不会超出触发元素或窗口边界  
       // 这里只是一个简单的例子，将 tooltip 放在鼠标指针的下方和右侧  
       this.tooltipTop = y + 20; // 20px 的偏移量  
       this.tooltipLeft = x + 20; // 20px 的偏移量  
-  
+
+      let bi = 670 / Event.globalData.player.videoTime
+    
+      this.nowTime = Tool.formatSeconds(event.offsetX /bi)
+
       // 你可能还需要考虑窗口的滚动位置，这里简化处理  
       // this.tooltipTop += window.pageYOffset || document.documentElement.scrollTop;  
       // this.tooltipLeft += window.pageXOffset || document.documentElement.scrollLeft;  
     },  
+    clickBar(event) {
+      let bi = 670 / Event.globalData.player.videoTime
+      let time = Math.ceil(event.offsetX / bi)
+      Event.globalData.player.htmlEle.currentTime = time
+
+    },
     hideTooltip() {  
       this.isTooltipVisible = false;  
     },  
