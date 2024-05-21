@@ -12,6 +12,7 @@ export default {
     url:'https://cdn.zoubuting.com/20210703/Klgppf2j/hls/index.m3u8',
   },
   globalData:{
+    player:null,
     playStatus: 0, //0未开始 1下载中 2已完成 3切换中
     sliceInfo:[], //所有片段信息
     ase:null

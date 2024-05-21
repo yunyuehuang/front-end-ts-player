@@ -7,10 +7,10 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
-  // devtool: "eval-source-map",
+  devtool: "eval-source-map",
   plugins: [
     new HtmlWebpackPlugin({
-      title: '阿林播放器',
+      title: 'gg',
       filename: 'index.html', //输出文件
       template: 'public/index.html'
     }),

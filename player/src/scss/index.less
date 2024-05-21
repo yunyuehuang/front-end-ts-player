@@ -267,20 +267,19 @@ input:focus {
 
 
 .status {
-  display: flex;
-  height: 3px;
+  cursor: pointer;
+  height: 10px;
   position: relative;
   border-radius: 3px;
   width: 670px;
   overflow: hidden;
   margin: 0 auto;
   margin-top: -15px;
+  background-color: #dcdcdc;
   div {
-    flex-grow: 1;
-
-  }
-  .init {
-    background-color: #dcdcdc;
+    position: absolute;
+    top:0;
+    bottom: 0;
   }
   .load {
     background-color: #ffcb47;
@@ -293,10 +292,16 @@ input:focus {
   .error {
     background-color: #f71e1e;
   }
-
+ 
   
 }
-
+.tooltip{
+  width: 50px;
+  position: fixed;
+  top:15px;
+  background: blue;
+  color:white;
+}
 
 
 #video-wrapper {

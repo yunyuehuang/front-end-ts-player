@@ -1,9 +1,9 @@
 <template>
   <div class="wrap" id="wrap">
-    <div class="title">
+    <!-- <div class="title">
       <div class="t1">阿林播放器</div>
       <div class="t2">看剧更轻松</div>
-    </div>
+    </div> -->
     <div class="search">
       <input v-model="config.pageUrl" class="input-url">
       <div class="btn" @click="play(1)">
@@ -89,14 +89,6 @@
           <div class="num">{{loadingVideoSlice}}</div>
           <div class="text">加载中</div>
         </div>
-        <!-- <div class="mbox loaded">
-          <div class="spinner" :style="{'--loaded-left': loadedVideoSlice.cssLeft, '--loaded-left-color': loadedVideoSlice.cssLeftColor, '--loaded-right': loadedVideoSlice.cssRight}">
-            <div class="mask"></div>
-            <i class="spinner-progress"></i>
-          </div>
-          <div class="num" >{{loadedVideoSlice.num}}</div>
-          <div class="text">已加载</div>
-        </div> -->
         <div class="mbox append">
           <div class="spinner" :style="{'--append-left': appendVideoSlice.cssLeft, '--append-left-color': appendVideoSlice.cssLeftColor, '--append-right': appendVideoSlice.cssRight}">
             <div class="mask"></div>
@@ -110,9 +102,7 @@
     </div>
     <div id="video-wrapper">
       <video controls ref="video"></video>
-      <div class="status">
-        <div v-for="item in statusBox" :class="item"></div>
-      </div>
+      <playbar ref="bar"></playbar>
     </div>
 
   </div>
@@ -123,31 +113,28 @@ import Event from "../player/event.js"
 import Enum from "../player/enum.js"
 import Player from "@src/player/player.js"
 import Req from "@src/player/request.js"
-
 import Store from "../player/store"
+import playbar from "./playbar.vue"
+
 export default {
   name: 'App',
+  components: {  
+    playbar  
+  },  
   data(){
     return {
       config:Event.config,
       videoSlice:0,
-      loadedVideoSlice:{
-        num:0,
-        cssLeft:"rotate(180deg)",
-        cssRight:"rotate(-180deg)",
-        cssLeftColor:"#edeaff"
-      }, //已加载 
       appendVideoSlice:{
         num:0,
         cssLeft:"rotate(180deg)",
         cssRight:"rotate(-180deg)",
         cssLeftColor:"#ebf7f7"
       }, //已解析
-      loadingVideoSlice: 0, //加载中
+      loadingVideoSlice: 0, //加载中的数量
       globalStatus:Enum.playStatus.INIT,
-      statusBox: ['init'],
       allSize:0, //内存占用大小
-      player:null
+      player:null,
     }
   },
 
@@ -186,18 +173,16 @@ export default {
     })
 
     Event.on("tsload", (e)=>{ //开始下载片段
-      this.$set(this.statusBox, e, 'load');
+      this.$refs.bar.updateLoading();
       this.updateLoading()
     })
-
-    Event.on("tsload_err", (e)=>{ //下载片段完成
-      this.$set(this.statusBox, e, 'error');
-      this.updateLoading()
-    })
-
     Event.on("transfered",(e)=>{ //片段转换完成
       this.allSize += e[0].byteLength 
-      this.$set(this.statusBox, e[1], 'append')
+      this.$refs.bar.updateLoading();
+      this.updateLoading()
+    })
+    Event.on("tsload_err", (e)=>{ //下载片段完成
+      this.$refs.bar.updateLoading();
       this.updateLoading()
     })
 
@@ -211,40 +196,28 @@ export default {
     let video = this.$refs.video
    
     this.player = new Player()
+    Event.globalData.player = this.player
     this.player.attachHtmlEle(video)
   },
   methods:{
-
     updateLoading(){
       this.loadingVideoSlice = 0
-      this.loadedVideoSlice.num = 0
       this.appendVideoSlice.num = 0
-      this.statusBox.map((e)=>{
-        if (e == 'load') {
+    
+      for (let i = 0; i < Event.globalData.sliceInfo.length; i++) {
+        let slice = Event.globalData.sliceInfo[i]
+        if (slice.loadStatus == 1) { //下载中
           this.loadingVideoSlice++
-        }
-        if (e == 'loaded') {
-          this.loadedVideoSlice.num ++
-          if (this.loadedVideoSlice.num >= this.videoSlice) {
+        } else if (slice.loadStatus == 2) { //下载完成
+          this.appendVideoSlice.num ++
+          if (this.appendVideoSlice.num >= this.videoSlice) {
             Event.emit("status_change", Enum.playStatus.COMPLETE)
           }
-        }
-        if (e == 'append') {
-          this.appendVideoSlice.num ++
-        }
-      })
-
-      this.loadedVideoSlice.num += this.appendVideoSlice.num
-      let loadedPer = this.getRowCss(this.loadedVideoSlice.num)
-      this.loadedVideoSlice.cssLeft = `rotate(${loadedPer.left}deg)` 
-      this.loadedVideoSlice.cssRight = `rotate(${loadedPer.right}deg)` 
-      if (loadedPer.right < 0) {
-        this.loadedVideoSlice.cssLeftColor = "#edeaff"
-      } else {
-        this.loadedVideoSlice.cssLeftColor = "#a58dff"
-      }
     
-      loadedPer = this.getRowCss(this.appendVideoSlice.num)
+        }
+      }
+     
+      let loadedPer = this.getRowCss(this.appendVideoSlice.num)
       this.appendVideoSlice.cssLeft = `rotate(${loadedPer.left}deg)` 
       this.appendVideoSlice.cssRight = `rotate(${loadedPer.right}deg)` 
       if (loadedPer.right < 0) {
@@ -283,10 +256,9 @@ export default {
       }
 
       let myURL = new URL(this.config.url);
-      console.log(myURL)
       let urlList = []
       let sliceInfo = []
-      this.statusBox = []
+
       let currentTime = 0
       for (const i in lines) {
         let e = lines[i]
@@ -298,7 +270,7 @@ export default {
             url = `${myURL.origin}/${e}`
           }
           urlList.push(url)
-          this.statusBox.push('init')
+
         }
         if (e.indexOf('EXTINF') > -1) {
           let match = /\d+(\.\d+)?/.exec(e);
@@ -328,7 +300,6 @@ export default {
       
       this.player.videoTime = currentTime
       this.allSize = 0
-    debugger
       Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.play()
     },
