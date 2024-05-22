@@ -67,9 +67,6 @@ export default class myPlayer{
   }
 
   play(){
-    if (this.tsLoader) {
-      this.stop()
-    }
   
     this.mediaSource = new MediaSource()
     this.htmlEle.src = URL.createObjectURL(this.mediaSource)

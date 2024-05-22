@@ -141,6 +141,9 @@ export default {
   watch:{
     config:{ 
       handler: function (newValue, oldValue) {
+        console.log("watch", newValue, oldValue)
+        Event.config.playBeginTime = Tool.spliceTime(newValue.playBeginTimeStr)
+        Event.config.playEndTime = Tool.spliceTime(newValue.playEndTimeStr)
         Store.setConfig(this.config)
       },
       deep: true 
@@ -297,8 +300,9 @@ export default {
 
       Event.globalData.sliceInfo = sliceInfo
       this.videoSlice = sliceInfo.length
-      
+      this.player.stop()
       this.player.videoTime = currentTime
+      console.log("总时长", this.player.videoTime)
       this.allSize = 0
       Event.emit("status_change", Enum.playStatus.LOADING)
       this.player.play()
@@ -328,8 +332,7 @@ export default {
         return
       }
 
-      Event.config.playBeginTime = Tool.spliceTime(this.config.playBeginTimeStr)
-      Event.config.playEndTime = Tool.spliceTime(this.config.playEndTimeStr)
+
 
       Event.emit("status_change", Enum.playStatus.PASEING)
 
