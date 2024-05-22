@@ -1,16 +1,23 @@
 const path = require('path');
 const { VueLoaderPlugin } = require('vue-loader')
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-module.exports = {
+
+
+
+module.exports = (env, argv) => {
+  console.log(env); // {lang: 'cn'}
+  let devTool = env.model == "p" ?  "" :  "source-map"
+  console.log("开发模式", devTool)
+  return {
   entry: './src/index.js',
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
-  devtool: "eval-source-map",
+  devtool: devTool,
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'gg',
+      title: '阿林播放器',
       filename: 'index.html', //输出文件
       template: 'public/index.html'
     }),
@@ -64,11 +71,12 @@ module.exports = {
         }
       }
     ]
+  
   },
   resolve: {
     alias: {
       "@src": path.resolve(__dirname, 'src')
     }
   }
-};
+}}
 

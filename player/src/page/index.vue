@@ -1,9 +1,9 @@
 <template>
   <div class="wrap" id="wrap">
-    <!-- <div class="title">
+    <div class="title">
       <div class="t1">阿林播放器</div>
       <div class="t2">看剧更轻松</div>
-    </div> -->
+    </div>
     <div class="search">
       <input v-model="config.pageUrl" class="input-url">
       <div class="btn" @click="play(1)">
@@ -38,11 +38,11 @@
         </div>
         <div class="item-input">
           <span class="text">起始时间(分)</span>
-          <input v-model="config.playBeginTime"> 
+          <input v-model="config.playBeginTimeStr"> 
         </div>
         <div class="item-input">
           <span class="text">结束时间(分)</span>
-          <input v-model="config.playEndTime"> 
+          <input v-model="config.playEndTimeStr"> 
         </div>
         <div class="item-input">
           <span class="text">提前量(分)</span>
@@ -98,11 +98,11 @@
           <div class="text">已解析</div>
         </div>
       </div>
-    
+      <playbar ref="bar"></playbar>
     </div>
     <div id="video-wrapper">
       <video controls ref="video"></video>
-      <playbar ref="bar"></playbar>
+     
     </div>
 
   </div>
@@ -115,7 +115,7 @@ import Player from "@src/player/player.js"
 import Req from "@src/player/request.js"
 import Store from "../player/store"
 import playbar from "./playbar.vue"
-
+import Tool from "../player/tool.js"
 export default {
   name: 'App',
   components: {  
@@ -327,6 +327,9 @@ export default {
         alert("请使用http访问")
         return
       }
+
+      Event.config.playBeginTime = Tool.spliceTime(this.config.playBeginTimeStr)
+      Event.config.playEndTime = Tool.spliceTime(this.config.playEndTimeStr)
 
       Event.emit("status_change", Enum.playStatus.PASEING)
 

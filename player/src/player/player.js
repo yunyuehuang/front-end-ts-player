@@ -6,8 +6,6 @@ import sourceBuff from "./sourceBuff"
 import Event from "./event"
 import Decrypter from "./crypt/decrypter"
 import {hexadecimalInteger} from "./crypt/mp4-tools.js"
-import Enum from "./enum"
-import { get } from "jquery"
 
 
 export default class myPlayer{
@@ -50,7 +48,7 @@ export default class myPlayer{
       slice.buff = data[0]
 
       let ts = this.htmlEle.currentTime
-      if (!this.autoPlay && slice.eTime - Event.config.playBeginTime*60 > 30) { //加载到一定长度，自动播放
+      if (!this.autoPlay && slice.eTime - Event.config.playBeginTime > 30) { //加载到一定长度，自动播放
         try {
           this.htmlEle.play()
           this.htmlEle.requestFullscreen()
@@ -89,13 +87,13 @@ export default class myPlayer{
         let beginOffset = 0
         let sliceInfo = Event.globalData.sliceInfo
         for (const i in sliceInfo) {
-          if (Event.config.playBeginTime*60 >= sliceInfo[i].sTime && Event.config.playBeginTime*60 < sliceInfo[i].eTime) {
+          if (Event.config.playBeginTime >= sliceInfo[i].sTime && Event.config.playBeginTime < sliceInfo[i].eTime) {
             beginOffset = i
             break
           }
         }
         this.tsLoader.urlIndex = beginOffset
-        this.htmlEle.currentTime = Event.config.playBeginTime*60
+        this.htmlEle.currentTime = Event.config.playBeginTime
       } 
 
       console.log("envData", Event)
@@ -110,8 +108,9 @@ export default class myPlayer{
       this.decoder.stop()
       this.sourceBuff.stop()
       this.autoPlay = false
+      this.videoTime = 0
       this.htmlEle.currentTime = 0
-      this.htmlEle.exitFullscreen()
+      document.exitFullscreen()
       this.htmlEle.src = ''
     } catch (error) {
       console.log("stop error", error)
@@ -167,7 +166,7 @@ export default class myPlayer{
     if (!Event.config.autoPlayNext){
       return
     }
-    let end = Event.config.playEndTime > 0 ? Event.config.playEndTime*60 : this.videoTime-3
+    let end = Event.config.playEndTime > 0 ? Event.config.playEndTime : this.videoTime-3
     if (this.htmlEle.currentTime > end){
       console.log("结束触发")
       this.stop()
@@ -178,7 +177,7 @@ export default class myPlayer{
   }
 
   onVideoPlay(e){
-    
+    Event.emit("currentTime", this.htmlEle.currentTime)
     if(this.sourceBuff.nowTask){
       return
     }

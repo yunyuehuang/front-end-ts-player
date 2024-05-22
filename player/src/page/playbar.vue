@@ -1,14 +1,16 @@
 <template>
-  <div>
+  <div class="status-wrap">
     <div class="status"   @mousemove="updateTooltipPosition"  
       @mouseleave="hideTooltip" @click="clickBar" >
-      <div v-for="item in loadingBox" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
-      <div v-for="item in appendBox" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
-      <div v-for="item in errorBox" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
+      <div v-for="item in loadingBox" class="child" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
+      <div v-for="item in appendBox" class="child" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
+      <div v-for="item in errorBox" class="child" :class="item.classType" :style="'width:'+item.width+'px;left:'+item.left+'px;'"></div>
+    
     </div>
+    <div class="current" :style="'left:'+currentTimeBox.left+'px;'"></div>
     <div  
       class="tooltip"  
-      v-show="true"  
+      v-show="isTooltipVisible"  
       :style="{ top: tooltipTop + 'px', left: tooltipLeft + 'px' }"  
     >  
       {{nowTime}}
@@ -31,15 +33,33 @@ export default {
       nowTime:'00:00:00',
       loadingBox:[],
       appendBox:[],
-      errorBox:[]
+      errorBox:[],
+      currentTimeBox:{
+        left:0,
+        show:false
+      }
     }
+  },
+  mounted(){
+    Event.on("currentTime", (e)=>{
+      let bi = 670 / Event.globalData.player.videoTime
+      this.currentTimeBox.left = Math.ceil(e * bi-1)
+    })
   },
   methods:{
     updateTooltipPosition(event) {  
-      console.log(event)
+      if (Event.globalData.player.videoTime == 0) {
+        return
+      }
+
+      let target = event.target
+      if (event.target.classList.contains('child')) {  
+        target = event.target.parentNode
+      }
+
       this.isTooltipVisible = true;  
       // 获取触发元素的边界和窗口的滚动位置  
-      const rect = event.target.getBoundingClientRect();  
+      const rect = target.getBoundingClientRect();  
       const x = event.clientX;  
       const y = rect.top;  
   
@@ -49,18 +69,24 @@ export default {
       this.tooltipLeft = x + 20; // 20px 的偏移量  
 
       let bi = 670 / Event.globalData.player.videoTime
-    
-      this.nowTime = Tool.formatSeconds(event.offsetX /bi)
+      this.nowTime = Tool.formatSeconds((x - rect.left)/bi)
 
       // 你可能还需要考虑窗口的滚动位置，这里简化处理  
       // this.tooltipTop += window.pageYOffset || document.documentElement.scrollTop;  
       // this.tooltipLeft += window.pageXOffset || document.documentElement.scrollLeft;  
     },  
     clickBar(event) {
+      if (Event.globalData.player.videoTime == 0) {
+        return
+      }
+      let target = event.target
+      if (event.target.classList.contains('child')) {  //子元素冒泡的，先获取到父元素
+        target = event.target.parentNode
+      }
+      const rect = target.getBoundingClientRect();  
       let bi = 670 / Event.globalData.player.videoTime
-      let time = Math.ceil(event.offsetX / bi)
-      Event.globalData.player.htmlEle.currentTime = time
-
+      let time = Math.ceil((event.clientX - rect.left)/ bi)
+      Event.globalData.player.htmlEle.currentTime = time + 0.1
     },
     hideTooltip() {  
       this.isTooltipVisible = false;  

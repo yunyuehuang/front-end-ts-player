@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "webpack --watch",
     "dev": "set NODE_OPTIONS=--openssl-legacy-provider && webpack-dev-server --open",
-    "build": "set NODE_OPTIONS=--openssl-legacy-provider && webpack"
+    "build": "set NODE_OPTIONS=--openssl-legacy-provider && webpack --env.model=p"
   },
   "dependencies": {
     "babel-loader": "^8.2.5",

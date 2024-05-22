@@ -5,6 +5,8 @@ export default {
     threadNum: 5,
     timeOut:20,
     preLoadTime:20,
+    playBeginTimeStr:"0",
+    playEndTimeStr:"0",
     playBeginTime:0,
     playEndTime:0,
     autoPlayNext:false,

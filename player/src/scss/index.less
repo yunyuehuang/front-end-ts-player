@@ -265,42 +265,54 @@ input:focus {
   }
 }
 
-
-.status {
+.status-wrap{
   cursor: pointer;
-  height: 10px;
   position: relative;
-  border-radius: 3px;
   width: 670px;
-  overflow: hidden;
   margin: 0 auto;
-  margin-top: -15px;
-  background-color: #dcdcdc;
-  div {
+  .status {
+    width: 100%;
+    border-radius: 3px;
+    overflow: hidden;
+    height: 15px;
+    background-color: #dcdcdc;
+    div {
+      position: absolute;
+      top:0;
+      bottom: 0;
+    }
+    .load {
+      background-color: #ffcb47;
+    }
+    .append {
+      background-color: #48d1ca;
+    }
+    .error {
+      background-color: #f71e1e;
+    }
+  }
+  .current{
     position: absolute;
+    z-index: 88;
     top:0;
     bottom: 0;
+    background-color: black;
+    width: 2px;
+    &:hover{
+      transform: scale(1.2);
+    }
   }
-  .load {
-    background-color: #ffcb47;
-  }
-
-  .append {
-    background-color: #48d1ca;
-  }
-
-  .error {
-    background-color: #f71e1e;
-  }
- 
-  
 }
+
 .tooltip{
-  width: 50px;
+  display: inline-block;
+  padding: 3px 5px;
   position: fixed;
   top:15px;
-  background: blue;
+  background: black;
+  border-radius: 3px;
   color:white;
+  z-index: 66;
 }
 
 
