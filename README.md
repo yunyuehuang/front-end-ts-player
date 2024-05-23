@@ -26,8 +26,6 @@ JavaScript可以通过URL.createObjectURL方法生成一个临时的src, 该src�
 
 ## 本项目的实现思路
 
-### 说明文档
-https://kdocs.cn/l/ch6LZbTSgpSQ
 
 ### 事件驱动
 由于下载，解析，添加buffer等都是异步执行的，因此引入了订阅-发布模式，基于事件驱动来串联播放中涉及到的流程。
@@ -35,19 +33,11 @@ https://kdocs.cn/l/ch6LZbTSgpSQ
 ### 并发下载
 下载ts片段时，不是下载好了一个片段再下载下一个，而是同时发起多个ajax请求进行下载，提高下载效率。
 
-### soucebuffer设计
-由于soucebuffer有大小限制，所以要控制soucebuffer中的内容长度。比如当判断当前buffer中的内容长度大于30秒时，就删除前20秒的内容，视频的总长度是不会受到影响的。边加载边删除，保证buffer不会溢出。
-
-将soucebuffer分成了两个部分。第一部分就是上面说的，边加载下一个ts文件边在超过时长的时候进行删除。这部分buffer是为了推进下载进度的buffer。
-
-而另一部分是用于支持当前播放的buffer。播放buffer是当前播放点附近的buffer，随着播放进度的推进，要持续地append后面的内容。当然也要保证播放buffer的长度不超过一定的值，如果超过了也需要执行remove操作，把播放点之前的内容给移除掉。
-
 ### 加载超时设计
-ajax加载ts文件，append到mediasource中。video元素播放mediasource中的流。下载文件的过程中设定了请求超时和加载超时，超时后会自动重试。
+ajax加下载ts文件的过程中设定了请求超时和加载超时，超时后会自动重试。
 
-不同于常规播放器当前播放点在哪就只加载播放点附近数据的策略。本播放器会从头到尾按顺序一直加载文件，直到文件全部加载完毕。
-
-视频总时长一开始为0，随着ts流不断被append，视频总时长会自动更新，增长。
+### soucebuffer设计
+由于soucebuffer有大小限制，所以要控制soucebuffer中的内容长度。比如当判断当前buffer中的内容长度大于30秒时，就删除前20秒的内容。边加载边删除，保证buffer不会溢出。
 
 ### 数据缓存
 通过ajax加载到的ts数据都在本地用一个数组保存了起来。就算是在sourcebuffer中被remove了，后续也可以通过这个本地数组将数据重新添加进sourcebuffer中。
