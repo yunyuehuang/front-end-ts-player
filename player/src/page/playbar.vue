@@ -43,7 +43,7 @@ export default {
   mounted(){
     Event.on("currentTime", (e)=>{
       let bi = 670 / Event.globalData.player.videoTime
-      this.currentTimeBox.left = Math.ceil(e * bi-1)
+      this.currentTimeBox.left = e * bi-1
     })
   },
   methods:{
@@ -93,8 +93,8 @@ export default {
     },  
     setPos(obj) {
       let bi = 670 / Event.globalData.player.videoTime
-      obj.left = Math.ceil(obj.sTime * bi)
-      obj.width =  Math.ceil((obj.eTime -obj.sTime) * bi)
+      obj.left = obj.sTime * bi
+      obj.width =  (obj.eTime -obj.sTime) * bi
     },
     updateLoading(){
       let loadingBox = []

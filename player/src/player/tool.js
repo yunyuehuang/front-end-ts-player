@@ -26,6 +26,12 @@ export default {
     if (str == undefined) {
       return 0
     }
+    const regex = /^[\d:]+$/;  
+    if (!regex.test(str)) {
+      return 0
+    }
+
+
     let arr = str.split(':')
     let time = 0
     if (arr.length > 1) {
